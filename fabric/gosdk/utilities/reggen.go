@@ -4,12 +4,13 @@ package utilities
 
 import (
 	"fmt"
-	"hfrd/modules/gosdk/common"
 	"math"
 	"math/rand"
 	"os"
 	"regexp/syntax"
 	"time"
+
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 )
 
 const runeRangeEnd = 0x10ffff

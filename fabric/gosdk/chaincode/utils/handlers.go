@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/golang/protobuf/proto"
 	. "github.com/hyperledger/fabric-sdk-go/pkg/client/channel/invoke"
 	selectopts "github.com/hyperledger/fabric-sdk-go/pkg/client/common/selection/options"
@@ -13,8 +15,7 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/third_party/github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/rwsetutil"
 	pb "github.com/hyperledger/fabric-sdk-go/third_party/github.com/hyperledger/fabric/protos/peer"
 	"github.com/pkg/errors"
-	"hfrd/modules/gosdk/common"
-	"time"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 )
 
 var lsccFilter = func(ccID string) bool {

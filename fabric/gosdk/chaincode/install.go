@@ -2,20 +2,20 @@ package chaincode
 
 import (
 	"fmt"
-	"hfrd/modules/gosdk/common"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fab/ccpackager/gopackager"
+	"github.com/hyperledger/fabric-sdk-go/pkg/fab/resource"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"hfrd/modules/gosdk/chaincode/packager"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fab/resource"
-	"path/filepath"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/chaincode/packager"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 )
 
 var chaincodeInstallCmd = &cobra.Command{
@@ -133,12 +133,12 @@ func (cc *Chaincode) InstallChaincode(name, version, path, peer, org string) err
 		}
 	}(time.Now())
 	var ccPkg *resource.CCPackage
-	if (lang == "node") {
+	if lang == "node" {
 		ccPkg, err = packager.NewCCPackage(path, os.Getenv("GOPATH"))
-	} else if (lang == "cds") {
+	} else if lang == "cds" {
 		ccPkg, err = packager.NewCDSPackage(path, os.Getenv("GOPATH"))
 		path = filepath.Dir(path)
-	} else {  // currently we can support node, golang and cds. The default would be golang
+	} else { // currently we can support node, golang and cds. The default would be golang
 		ccPkg, err = gopackager.NewCCPackage(path, os.Getenv("GOPATH"))
 	}
 

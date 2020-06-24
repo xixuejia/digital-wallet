@@ -1,17 +1,17 @@
 package packager
 
 import (
-	"path"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fab/resource"
-	"github.com/pkg/errors"
-	pb "github.com/hyperledger/fabric-sdk-go/third_party/github.com/hyperledger/fabric/protos/peer"
-	"os"
-	"io/ioutil"
-	"github.com/golang/protobuf/proto"
-	"hfrd/modules/gosdk/common"
 	"fmt"
-)
+	"io/ioutil"
+	"os"
+	"path"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-sdk-go/pkg/fab/resource"
+	pb "github.com/hyperledger/fabric-sdk-go/third_party/github.com/hyperledger/fabric/protos/peer"
+	"github.com/pkg/errors"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
+)
 
 // install chaincode with cds file
 

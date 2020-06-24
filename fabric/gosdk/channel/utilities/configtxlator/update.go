@@ -17,35 +17,33 @@ limitations under the License.
 package configtxlator
 
 import (
-	"fmt"
-	"reflect"
-	"github.com/golang/protobuf/proto"
-	"github.com/pkg/errors"
 	"bytes"
 	"encoding/json"
-	"os"
-
-	//"io"
+	"fmt"
 	"io/ioutil"
+	"os"
+	"reflect"
 
-	"hfrd/modules/gosdk/channel/utilities/protolator"
+	"github.com/golang/protobuf/proto"
 	cb "github.com/hyperledger/fabric/protos/common"
+	_ "github.com/hyperledger/fabric/protos/msp"
 	_ "github.com/hyperledger/fabric/protos/orderer"
 	_ "github.com/hyperledger/fabric/protos/peer"
-	_ "github.com/hyperledger/fabric/protos/msp"
+	"github.com/pkg/errors"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/channel/utilities/protolator"
 )
 
 // QueryChannelConfig used to query latest channel config block
 func DecodeProto(msgName string, configBytes []byte) (map[string]interface{}, error) {
 	msgType := proto.MessageType(msgName)
 	if msgType == nil {
-		return nil,errors.Errorf("message of type %s unknown", msgType)
+		return nil, errors.Errorf("message of type %s unknown", msgType)
 	}
 	msg := reflect.New(msgType.Elem()).Interface().(proto.Message)
 
 	err := proto.Unmarshal(configBytes, msg)
 	if err != nil {
-		return nil,errors.Wrapf(err, "error unmarshaling")
+		return nil, errors.Wrapf(err, "error unmarshaling")
 	}
 
 	var buffer bytes.Buffer
@@ -55,7 +53,7 @@ func DecodeProto(msgName string, configBytes []byte) (map[string]interface{}, er
 	// }
 	err = protolator.DeepMarshalJSON(&buffer, msg)
 	if err != nil {
-		return nil,errors.Wrapf(err, "error decoding output")
+		return nil, errors.Wrapf(err, "error decoding output")
 	}
 
 	configJson := make(map[string]interface{})
@@ -65,21 +63,18 @@ func DecodeProto(msgName string, configBytes []byte) (map[string]interface{}, er
 	}
 	//fmt.Printf("configJSON is %s \n",configJson)
 	if msgName == "common.Block" {
-		channelGroup := configJson["data"].(map[string]interface{})["data"].
-		([]interface{})[0].(map[string]interface{})["payload"].
-		(map[string]interface{})["data"].(map[string]interface{})["config"].
-		(map[string]interface{})
-		return channelGroup,nil
+		channelGroup := configJson["data"].(map[string]interface{})["data"].([]interface{})[0].(map[string]interface{})["payload"].(map[string]interface{})["data"].(map[string]interface{})["config"].(map[string]interface{})
+		return channelGroup, nil
 	}
 
-	return configJson,nil
+	return configJson, nil
 }
 
 // QueryChannelConfig used to query latest channel config block
-func EncodeProto(msgName string, configBytes []byte) ([]byte,error) {
+func EncodeProto(msgName string, configBytes []byte) ([]byte, error) {
 	msgType := proto.MessageType(msgName)
 	if msgType == nil {
-		return nil,errors.Errorf("message of type %s unknown", msgType)
+		return nil, errors.Errorf("message of type %s unknown", msgType)
 	}
 	msg := reflect.New(msgType.Elem()).Interface().(proto.Message)
 
@@ -88,46 +83,44 @@ func EncodeProto(msgName string, configBytes []byte) ([]byte,error) {
 	err := protolator.DeepUnmarshalJSON(buffer, msg)
 
 	if err != nil {
-		return nil,errors.Wrapf(err, "error encoding output")
+		return nil, errors.Wrapf(err, "error encoding output")
 	}
 
 	out, err := proto.Marshal(msg)
 	if err != nil {
-		return nil,errors.Wrapf(err, "error marshaling")
+		return nil, errors.Wrapf(err, "error marshaling")
 	}
-	return out,nil
+	return out, nil
 }
 
-
 // QueryChannelConfig used to query latest channel config block
-func ComputeUpdt(origIn, updtIn []byte, channelID string) ([]byte,error) {
+func ComputeUpdt(origIn, updtIn []byte, channelID string) ([]byte, error) {
 	origConf := &cb.Config{}
 	err := proto.Unmarshal(origIn, origConf)
 	if err != nil {
-		return nil,errors.Wrapf(err, "error unmarshaling original config")
+		return nil, errors.Wrapf(err, "error unmarshaling original config")
 	}
 
 	updtConf := &cb.Config{}
 	err = proto.Unmarshal(updtIn, updtConf)
 	if err != nil {
-		return nil,errors.Wrapf(err, "error unmarshaling updated config")
+		return nil, errors.Wrapf(err, "error unmarshaling updated config")
 	}
 
 	cu, err := Compute(origConf, updtConf)
 	if err != nil {
-		return nil,errors.Wrapf(err, "error computing config update")
+		return nil, errors.Wrapf(err, "error computing config update")
 	}
 
 	cu.ChannelId = channelID
 
 	outBytes, err := proto.Marshal(cu)
 	if err != nil {
-		return nil,errors.Wrapf(err, "error marshaling computed config update")
+		return nil, errors.Wrapf(err, "error marshaling computed config update")
 	}
 
-	return outBytes,nil
+	return outBytes, nil
 }
-
 
 func computePoliciesMapUpdate(original, updated map[string]*cb.ConfigPolicy) (readSet, writeSet, sameSet map[string]*cb.ConfigPolicy, updatedMembers bool) {
 	readSet = make(map[string]*cb.ConfigPolicy)
@@ -280,23 +273,23 @@ func computeGroupUpdate(original, updated *cb.ConfigGroup) (readSet, writeSet *c
 			len(readSetGroups) == 0 &&
 			len(writeSetGroups) == 0 {
 			return &cb.ConfigGroup{
-				Version: original.Version,
-			}, &cb.ConfigGroup{
-				Version: original.Version,
-			}, false
+					Version: original.Version,
+				}, &cb.ConfigGroup{
+					Version: original.Version,
+				}, false
 		}
 
 		return &cb.ConfigGroup{
-			Version:  original.Version,
-			Policies: readSetPolicies,
-			Values:   readSetValues,
-			Groups:   readSetGroups,
-		}, &cb.ConfigGroup{
-			Version:  original.Version,
-			Policies: writeSetPolicies,
-			Values:   writeSetValues,
-			Groups:   writeSetGroups,
-		}, true
+				Version:  original.Version,
+				Policies: readSetPolicies,
+				Values:   readSetValues,
+				Groups:   readSetGroups,
+			}, &cb.ConfigGroup{
+				Version:  original.Version,
+				Policies: writeSetPolicies,
+				Values:   writeSetValues,
+				Groups:   writeSetGroups,
+			}, true
 	}
 
 	for k, samePolicy := range sameSetPolicies {
@@ -315,17 +308,17 @@ func computeGroupUpdate(original, updated *cb.ConfigGroup) (readSet, writeSet *c
 	}
 
 	return &cb.ConfigGroup{
-		Version:  original.Version,
-		Policies: readSetPolicies,
-		Values:   readSetValues,
-		Groups:   readSetGroups,
-	}, &cb.ConfigGroup{
-		Version:   original.Version + 1,
-		Policies:  writeSetPolicies,
-		Values:    writeSetValues,
-		Groups:    writeSetGroups,
-		ModPolicy: updated.ModPolicy,
-	}, true
+			Version:  original.Version,
+			Policies: readSetPolicies,
+			Values:   readSetValues,
+			Groups:   readSetGroups,
+		}, &cb.ConfigGroup{
+			Version:   original.Version + 1,
+			Policies:  writeSetPolicies,
+			Values:    writeSetValues,
+			Groups:    writeSetGroups,
+			ModPolicy: updated.ModPolicy,
+		}, true
 }
 
 func Compute(original, updated *cb.Config) (*cb.ConfigUpdate, error) {
@@ -359,28 +352,28 @@ func JSONtoConfig(filename string) (map[string]interface{}, error) {
 	// 	return err
 	// }
 	// fmt.Printf("read JSON file as %s \n",root)
-    // return err
+	// return err
 	//return recursivelyPopulateMessageFromTree(root, msg)
 	//var filename = "/Users/qiyongxin/go/src/hfrd-work/modules/gosdk/channel/utilities/configtxgen/org3-artifacts"
-	
+
 	bytes, err := ioutil.ReadFile(filename)
-    if err != nil {
-        fmt.Println("ReadFile: ", err.Error())
-        return nil,err
-    }
+	if err != nil {
+		fmt.Println("ReadFile: ", err.Error())
+		return nil, err
+	}
 	configJSON := make(map[string]interface{})
-    if err := json.Unmarshal(bytes, &configJSON); err != nil {
-        fmt.Println("Unmarshal: ", err.Error())
-        return nil,err
+	if err := json.Unmarshal(bytes, &configJSON); err != nil {
+		fmt.Println("Unmarshal: ", err.Error())
+		return nil, err
 	}
 	//fmt.Printf("read JSON config as %s \n",configJSON)
-	return configJSON,err
+	return configJSON, err
 }
 
 func ConfigToJSON(jsonconfig map[string]interface{}) {
 	//b, err := json.Marshal(jsonconfig)
 	b, err := json.MarshalIndent(jsonconfig, "", "      ")
-	//_, err := json.MarshalIndent(jsonconfig, "", "      ") 
+	//_, err := json.MarshalIndent(jsonconfig, "", "      ")
 	if err != nil {
 		fmt.Println("config to JSON failed:", err)
 		return
@@ -399,11 +392,12 @@ func jsonToMap(marshaled []byte) (map[string]interface{}, error) {
 	}
 	return tree, nil
 }
+
 // EncodeProtoOrig to encode config group to Proto []byte
 func EncodeProtoOrig(msgName string, input map[string]interface{}) ([]byte, error) {
 	msgType := proto.MessageType(msgName)
 	if msgType == nil {
-		return nil,errors.Errorf("message of type %s unknown", msgType)
+		return nil, errors.Errorf("message of type %s unknown", msgType)
 	}
 	msg := reflect.New(msgType.Elem()).Interface().(proto.Message)
 
@@ -414,18 +408,18 @@ func EncodeProtoOrig(msgName string, input map[string]interface{}) ([]byte, erro
 	//protolator.RecursivelyPopulateMessageFromConfig(input msg)
 	err := protolator.DeepUnmarshalMap(input, msg)
 	if err != nil {
-		return nil,errors.Wrapf(err, "error DeepUnmarshalMap input")
+		return nil, errors.Wrapf(err, "error DeepUnmarshalMap input")
 	}
 
 	out, err := proto.Marshal(msg)
 	if err != nil {
-		return nil,errors.Wrapf(err, "error marshaling")
+		return nil, errors.Wrapf(err, "error marshaling")
 	}
 
 	// _, err = output.Write(out)
 	// if err != nil {
 	// 	return errors.Wrapf(err, "error writing output")
 	// }
-    fmt.Printf("EncodeProtoOrig success")
-	return out,err
+	fmt.Printf("EncodeProtoOrig success")
+	return out, err
 }

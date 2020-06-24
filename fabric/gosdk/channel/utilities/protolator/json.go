@@ -20,13 +20,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"hfrd/modules/gosdk/common"
 	"io"
 	"io/ioutil"
 	"reflect"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 )
 
 type protoFieldFactory interface {
@@ -479,7 +479,7 @@ func recursivelyPopulateMessageFromTree(tree map[string]interface{}, msg proto.M
 
 	for _, field := range fields {
 		specialField, ok := specialFieldsMap[field.Name()]
-		if !ok || specialField == nil{
+		if !ok || specialField == nil {
 			continue
 		}
 		if err := field.PopulateFrom(specialField); err != nil {

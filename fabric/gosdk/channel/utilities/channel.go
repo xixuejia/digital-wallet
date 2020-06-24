@@ -1,7 +1,12 @@
 package utilities
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -11,20 +16,10 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/msp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
-
-	"hfrd/modules/gosdk/channel/utilities/configtxlator"
-	hfrdcommon "hfrd/modules/gosdk/common"
-
 	"github.com/hyperledger/fabric/protos/common"
-
-	"bytes"
-	"encoding/json"
-	"regexp"
-	"strings"
-
 	"github.com/pkg/errors"
-
-	"strconv"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/channel/utilities/configtxlator"
+	hfrdcommon "github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 )
 
 const (

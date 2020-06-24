@@ -2,9 +2,6 @@ package chaincode
 
 import (
 	"fmt"
-	"hfrd/modules/gosdk/chaincode/utils"
-	"hfrd/modules/gosdk/common"
-	"hfrd/modules/gosdk/utilities"
 	"os"
 	"os/signal"
 	"strconv"
@@ -23,6 +20,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/chaincode/utils"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/utilities"
 )
 
 var chaincodeInvokeCmd = &cobra.Command{

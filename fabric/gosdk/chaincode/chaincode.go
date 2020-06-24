@@ -2,6 +2,10 @@ package chaincode
 
 import (
 	"fmt"
+	"path/filepath"
+	"regexp"
+	"time"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
@@ -18,12 +22,9 @@ import (
 	"github.com/hyperledger/fabric/protos/msp"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"hfrd/modules/gosdk/chaincode/utils"
-	"hfrd/modules/gosdk/common"
-	hfrdcommon "hfrd/modules/gosdk/common"
-	"path/filepath"
-	"regexp"
-	"time"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/chaincode/utils"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
+	hfrdcommon "github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 )
 
 var chaincodeCmd = &cobra.Command{
@@ -67,7 +68,7 @@ const (
 	CC_NAME_PREFIX            = "chaincodeNamePrefix"
 	CHAN_NAME_PREFIX          = "channelNamePrefix"
 	PREFIX_OFFSET             = "prefixOffset"
-	CHAN_NAME_LIST 			  = "channelNameList"
+	CHAN_NAME_LIST            = "channelNameList"
 	CC_VERSION                = "chaincodeVersion"
 	CC_PATH                   = "path"
 	PEERS                     = "peers"

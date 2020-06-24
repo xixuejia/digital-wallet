@@ -1,21 +1,18 @@
 package execute
 
 import (
-	"fmt"
-	"hfrd/modules/gosdk/common"
-	"hfrd/modules/gosdk/utilities"
-	"os/exec"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
 	"bytes"
+	"fmt"
+	"os/exec"
+	"strings"
 	"syscall"
 	"time"
 
-	"strings"
-
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/utilities"
 )
 
 var executeCommandCmd = &cobra.Command{

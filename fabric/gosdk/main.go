@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	"hfrd/modules/gosdk/chaincode"
-	"hfrd/modules/gosdk/channel"
-	"hfrd/modules/gosdk/common"
-	"hfrd/modules/gosdk/execute"
-	"hfrd/modules/gosdk/metadata"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/chaincode"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/channel"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/execute"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/metadata"
 )
 
 var rootCmd = &cobra.Command{

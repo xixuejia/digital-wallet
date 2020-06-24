@@ -8,7 +8,7 @@ FABRIC_ENV_FILE=./fixtures/.env
 # If you are using sample network to drive test modules,you must set TEST_TYPE to local
 export TEST_TYPE=local
 export GOPATH=/opt/gopath
-export WORKDIR=${GOPATH}/src/hfrd/modules/gosdk
+export WORKDIR=${GOPATH}/src/github.com/xixuejia/digital-wallet/fabric/gosdk
 export GOSDK_IMAGE=hfrd/gosdk:amd64-latest
 
 # Required input parameter: fabricVersion string

@@ -3,28 +3,28 @@ package channel
 import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/spf13/cobra"
-	hfrdcommon "hfrd/modules/gosdk/common"
+	hfrdcommon "github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 )
 
 const (
-	CLIENT_ORGANIZATION = "client.organization" // defined in fabric-sdk-go config yaml
-	CH_NAME_PREFIX      = "channelNamePrefix"
-	CH_NAME             = "channelName"
-	CH_NAME_LIST        = "channelNameList"
-	PREFIX_OFFSET       = "prefixOffset"
-	CH_CONSORTIUM       = "channelConsortium"
-	CH_PEER_ORGS        = "channelOrgs"
-	CH_ORDERER_NAME     = "ordererName"
-	CH_PEERS            = "peers"         // define the peers that will join the channel
-	APPLICATION_CAPABILITY      = "applicationCapability" // use to define application capability
+	CLIENT_ORGANIZATION    = "client.organization" // defined in fabric-sdk-go config yaml
+	CH_NAME_PREFIX         = "channelNamePrefix"
+	CH_NAME                = "channelName"
+	CH_NAME_LIST           = "channelNameList"
+	PREFIX_OFFSET          = "prefixOffset"
+	CH_CONSORTIUM          = "channelConsortium"
+	CH_PEER_ORGS           = "channelOrgs"
+	CH_ORDERER_NAME        = "ordererName"
+	CH_PEERS               = "peers"                 // define the peers that will join the channel
+	APPLICATION_CAPABILITY = "applicationCapability" // use to define application capability
 
 	// Orderer channel configurations
-	ORDERER_ORG                      = "ordererOrgName"
-	CH_BATCH_TIMEOUT                 = "batchTimeout"
-	CH_BATCH_SIZE_MAX_MESSAGE_COUNT  = "maxMessageCount"
+	ORDERER_ORG                       = "ordererOrgName"
+	CH_BATCH_TIMEOUT                  = "batchTimeout"
+	CH_BATCH_SIZE_MAX_MESSAGE_COUNT   = "maxMessageCount"
 	CH_BATCH_SIZE_PREFERRED_MAX_BATES = "preferredMaxBytes"
-	CH_ORDERER_ADDRESSES_ACTION      = "ordererAddressesAction"
-	CH_ORDERER_ADDRESSES             = "ordererAddresses"
+	CH_ORDERER_ADDRESSES_ACTION       = "ordererAddressesAction"
+	CH_ORDERER_ADDRESSES              = "ordererAddresses"
 
 	// Peer channel Configurations
 	ANCHOR_PEERS = "anchorPeers"
@@ -45,12 +45,12 @@ var (
 	ordererOrgName         string
 	batchTimeout           string
 	maxMessageCount        float64
-	preferredMaxBytes       float64
+	preferredMaxBytes      float64
 	ordererAddressesAction string
 	ordererAddresses       []string
 	anchorPeers            []string
 	newOrgConfigPath       string
-	applicationCapability          string
+	applicationCapability  string
 )
 
 type ChannelConfig struct {

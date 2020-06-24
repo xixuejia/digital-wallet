@@ -8,12 +8,10 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/retry"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
-
-	"hfrd/modules/gosdk/common"
-
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 )
 
 var channelJoinCmd = &cobra.Command{

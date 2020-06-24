@@ -2,20 +2,17 @@ package channel
 
 import (
 	"fmt"
-	"time"
-
 	"strconv"
-
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"time"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/ledger"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
-
-	"hfrd/modules/gosdk/channel/utilities"
-	"hfrd/modules/gosdk/channel/utilities/configtxlator"
-	"hfrd/modules/gosdk/common"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/channel/utilities"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/channel/utilities/configtxlator"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 )
 
 var channelAddOrgCmd = &cobra.Command{

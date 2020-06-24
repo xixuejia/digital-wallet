@@ -3,8 +3,6 @@ package chaincode
 import (
 	"encoding/json"
 	"fmt"
-	"hfrd/modules/gosdk/chaincode/utils"
-	"hfrd/modules/gosdk/common"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -17,6 +15,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/chaincode/utils"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 )
 
 var chaincodeInstantiateCmd = &cobra.Command{
@@ -114,11 +114,10 @@ func instantiateChaincode() error {
 		return errors.New(CHAN_NAME_PREFIX + " and " + CHAN_NAME_LIST + " are mutual exclusive")
 	}
 
-
-	if channelNamePrefix != ""{
+	if channelNamePrefix != "" {
 		common.Logger.Debug(fmt.Sprintf("CHAINCODE_INSTANTIATE channelNamePrefix:%s", channelNamePrefix))
 		instantiateFunc := func(iterationIndex int) error {
-			channelName = cc.channelPrefix+strconv.Itoa(iterationIndex)
+			channelName = cc.channelPrefix + strconv.Itoa(iterationIndex)
 			channelConfig, err := common.GetTempChannelConfigFile(channelName, peers)
 			if err != nil {
 				return errors.Errorf("Instantiate failed due to errors in GetChannelBackendYaml. %s", err)
@@ -153,7 +152,7 @@ func instantiateChaincode() error {
 			return err
 		}
 
-	}else if len(channelNameList) > 0 {
+	} else if len(channelNameList) > 0 {
 		common.Logger.Debug(fmt.Sprintf("CHAINCODE_INSTANTIATE channelNameList:%s", channelNameList))
 		common.Logger.Debug(fmt.Sprintf("CHAINCODE_INSTANTIATE channelNameList length:%d", len(channelNameList)))
 		for index, channelName := range channelNameList {
@@ -183,18 +182,17 @@ func instantiateChaincode() error {
 			}
 			cc.sdk = sdk
 			if err = cc.InstantiateChaincode(cc.name,
-				cc.version, cc.path, org, channelName, peers...);err != nil{
-					return err
+				cc.version, cc.path, org, channelName, peers...); err != nil {
+				return err
 			}
 			if index != len(channelNameList)-1 {
 				base.Wait()
 			}
 		}
 
-	}else{
+	} else {
 		return errors.New("Either " + CHAN_NAME_PREFIX + " or " + CHAN_NAME_LIST + " should be provided")
 	}
-
 
 	return nil
 }
