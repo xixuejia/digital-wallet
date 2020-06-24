@@ -73,6 +73,6 @@ do
   --chaincodeName samplecc-0 --channelName mychannel0 \
   --chaincodeParams literal~~~invoke#literal~~~put#stringPattern~~~account[0-9]#stringPattern~~~[0-9]{5}#sequentialString~~~*marbles \
   --peers peer0.org1.example.com \
-  --iterationCount 1 --retryCount 5 --concurrencyLimit 1 --logLevel ERROR --serviceDiscovery false \
+  --iterationCount 1 --retryCount 5 --concurrencyLimit 1 --logLevel ERROR \
   || (cat config/mychannel0.yaml && exit 1)"
 done

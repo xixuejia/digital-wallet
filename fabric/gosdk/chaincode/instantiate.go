@@ -128,14 +128,6 @@ func instantiateChaincode() error {
 			if err != nil {
 				return errors.WithMessage(err, "Unable to get config backends")
 			}
-			// reconfig configBackends with dynamic service discovery
-			if fabricVersion != "1.1" {
-				configBackends, err = configBackendsWithSD(connProfile, peers[0],
-					channelName, org, common.ADMIN, false)
-				if err != nil {
-					return errors.WithMessage(err, "Unable to get config backends with dynamic service discovery")
-				}
-			}
 
 			sdk, err := fabsdk.New(configBackends)
 			if err != nil {
@@ -165,14 +157,6 @@ func instantiateChaincode() error {
 			configBackends, err := common.GetConfigBackends(common.CONFIG_BCCSP, channelConfig, connProfile)
 			if err != nil {
 				return errors.WithMessage(err, "Unable to get config backends")
-			}
-			// reconfig configBackends with dynamic service discovery
-			if fabricVersion != "1.1" {
-				configBackends, err = configBackendsWithSD(connProfile, peers[0],
-					channelName, org, common.ADMIN, false)
-				if err != nil {
-					return errors.WithMessage(err, "Unable to get config backends with dynamic service discovery")
-				}
 			}
 			sdk, err := fabsdk.New(configBackends)
 			if err != nil {

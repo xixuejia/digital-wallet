@@ -11,12 +11,7 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
-	"github.com/hyperledger/fabric-sdk-go/pkg/client/common/discovery/dynamicdiscovery"
-	"github.com/hyperledger/fabric-sdk-go/pkg/common/options"
-	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk/factory/defsvc"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk/provider/chpvdr"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -41,38 +36,10 @@ const (
 	CC_INVOKE_FAIL = "chaincode.invoke.fail"
 )
 
-// DynamicDiscoveryProviderFactory is configured with dynamic (endorser) selection provider
-type DynamicDiscoveryProviderFactory struct {
-	defsvc.ProviderFactory
-}
-
-type channelProvider struct {
-	fab.ChannelProvider
-	services map[string]*dynamicdiscovery.ChannelService
-}
-
-// CreateLocalDiscoveryProvider returns a new local dynamic discovery provider
-func (f *DynamicDiscoveryProviderFactory) CreateLocalDiscoveryProvider(config fab.EndpointConfig) (fab.LocalDiscoveryProvider, error) {
-	return dynamicdiscovery.NewLocalProvider(config), nil
-}
-
-// CreateChannelProvider returns a new default implementation of channel provider
-func (f *DynamicDiscoveryProviderFactory) CreateChannelProvider(config fab.EndpointConfig, options ...options.Opt) (fab.ChannelProvider, error) {
-	chProvider, err := chpvdr.New(config)
-	if err != nil {
-		return nil, err
-	}
-	return &channelProvider{
-		ChannelProvider: chProvider,
-		services:        make(map[string]*dynamicdiscovery.ChannelService),
-	}, nil
-}
-
 func invokeCmd() *cobra.Command {
 	flags := chaincodeInvokeCmd.Flags()
 	flags.StringVar(&chaincodeName, CC_NAME, "", "chaincode name")
-	flags.StringSliceVar(&peers, PEERS, []string{}, "send proposal to the peer list. "+
-		"If peers list is empty, then test module will do service discovery to get the peers")
+	flags.StringSliceVar(&peers, PEERS, []string{}, "send proposal to the peer list.")
 	flags.StringVar(&channelName, CHANNEL_NAME, "", "the channel to send proposal to")
 	flags.StringVar(&chaincodeParams, CC_PARAMS, "", "chaincode invoke/query parameters")
 	flags.StringSliceVar(&dynamicTransientMapKs, CC_DYNAMIC_TRANSIENTMAP_K, []string{}, "the array of keys in dynamic transient map ")
@@ -80,7 +47,6 @@ func invokeCmd() *cobra.Command {
 	flags.StringVar(&staticTransientMap, CC_STATIC_TRANSIENTMAP, "", "the static transient map")
 	flags.StringVar(&queryOnly, QUERY_ONLY, "false", "if set to true, gosdk will not send tx to orderer(s)")
 	flags.IntVar(&threads, THREADS, 1, "how many threads to send proposal concurrently")
-	flags.BoolVar(&serviceDiscovery, SERVICE_DISCOVERY, false, "enable service discovery")
 	flags.StringVar(&fabricVersion, FABRIC_VERSION, "1.1", "Use fabricVersion to define different capabilities. Use format 1.x in fabricVersion")
 	flags.StringVar(&prometheusTargetUrl, PROMETHEUS_TARGET_URL, "", "if set, hfrd will send metrics to this prometheus endpoint")
 	chaincodeInvokeCmd.MarkFlagRequired(CC_NAME)
@@ -116,7 +82,6 @@ func invokeChaincode() error {
 	if len(peers) == 0 {
 		return errors.New("peers list is required!")
 	}
-	// TODO: I added all peers returned from service discovery to channel config backend
 	p := peers
 	channelConfig, err := common.GetTempChannelConfigFile(channelName, p)
 	if err != nil {
@@ -128,14 +93,7 @@ func invokeChaincode() error {
 	if err != nil {
 		return errors.WithMessage(err, "Unable to get config backends")
 	}
-	// reconfig configBackends with dynamic service discovery
-	if fabricVersion != "1.1" {
-		configBackends, err = configBackendsWithSD(connProfile, peers[0], channelName, org, common.ADMIN, true)
-		if err != nil {
-			return errors.WithMessage(err, "Unable to get config backends with dynamic service discovery")
-		}
-	}
-	sdk, err := fabsdk.New(configBackends, fabsdk.WithServicePkg(&DynamicDiscoveryProviderFactory{}))
+	sdk, err := fabsdk.New(configBackends)
 	if err != nil {
 		return errors.WithMessage(err, "Error creating sdk")
 	} else {
@@ -265,10 +223,6 @@ func (cc *Chaincode) InvokeChaincode() error {
 		_, err = cc.client.Query(channel.Request{ChaincodeID: cc.name, Fcn: cc.args[0],
 			Args: argsByte, TransientMap: cc.transientMap}, channel.WithTargetEndpoints(peers...))
 	} else {
-		if serviceDiscovery {
-			common.Logger.Debug(fmt.Sprintf("using service discovery"))
-			peers = []string{}
-		}
 		_, err = cc.invokeClient.Execute(channel.Request{ChaincodeID: cc.name, Fcn: cc.args[0],
 			Args: argsByte, TransientMap: cc.transientMap}, utils.WithTargetEndpoints(peers...))
 	}
