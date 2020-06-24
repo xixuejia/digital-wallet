@@ -1,4 +1,4 @@
-module github.com/xixuejia/digital-wallet/fabric/gosdk
+module github.com/xixuejia/digital-wallet
 
 go 1.14
 
