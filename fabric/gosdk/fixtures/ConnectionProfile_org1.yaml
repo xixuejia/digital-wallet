@@ -4,14 +4,14 @@ certificateAuthorities:
     httpOptions:
       verify: false
     tlsCACerts:
-      path: ${GOPATH}/src/github.com/xixuejia/digital-wallet/fabric/gosdk/fixtures/sdk-crypto/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
+      path: ${GOPATH}/src/hfrd/modules/gosdk/fixtures/sdk-crypto/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
     url: https://ca.org1.example.com:7054
   ca.org2.example.com:
     caName: ca.org2.example.com
     httpOptions:
       verify: false
     tlsCACerts:
-      path: ${GOPATH}/src/github.com/xixuejia/digital-wallet/fabric/gosdk/fixtures/sdk-crypto/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
+      path: ${GOPATH}/src/hfrd/modules/gosdk/fixtures/sdk-crypto/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
     url: https://ca.org2.example.com:7054
 client:
   connection:
@@ -23,7 +23,7 @@ client:
         eventReg: 300
   organization: org1
   cryptoconfig:
-    path: ${GOPATH}/src/github.com/xixuejia/digital-wallet/fabric/gosdk/fixtures/sdk-crypto
+    path: ${GOPATH}/src/hfrd/modules/gosdk/fixtures/sdk-crypto
 channels:
   mychannel10:
     peers:
@@ -72,7 +72,7 @@ orderers:
     grpcOptions:
       ssl-target-name-override: orderer.example.com
     tlsCACerts:
-      path: ${GOPATH}/src/github.com/xixuejia/digital-wallet/fabric/gosdk/fixtures/sdk-crypto/ordererorg/tlsca/tlsca.example.com-cert.pem
+      path: ${GOPATH}/src/hfrd/modules/gosdk/fixtures/sdk-crypto/ordererorg/tlsca/tlsca.example.com-cert.pem
     url: localhost:7050
 organizations:
   org1:
@@ -100,28 +100,28 @@ peers:
     grpcOptions:
       ssl-target-name-override: peer0.org1.example.com
     tlsCACerts:
-      path: ${GOPATH}/src/github.com/xixuejia/digital-wallet/fabric/gosdk/fixtures/sdk-crypto/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
+      path: ${GOPATH}/src/hfrd/modules/gosdk/fixtures/sdk-crypto/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
     url: peer0.org1.example.com:7051
   peer0.org2.example.com:
     eventUrl: peer0.org2.example.com:7053
     grpcOptions:
       ssl-target-name-override: peer0.org2.example.com
     tlsCACerts:
-      path: ${GOPATH}/src/github.com/xixuejia/digital-wallet/fabric/gosdk/fixtures/sdk-crypto/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
+      path: ${GOPATH}/src/hfrd/modules/gosdk/fixtures/sdk-crypto/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
     url: peer0.org2.example.com:7051
   peer1.org1.example.com:
     eventUrl: peer1.org1.example.com:7053
     grpcOptions:
       ssl-target-name-override: peer1.org1.example.com
     tlsCACerts:
-      path: ${GOPATH}/src/github.com/xixuejia/digital-wallet/fabric/gosdk/fixtures/sdk-crypto/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
+      path: ${GOPATH}/src/hfrd/modules/gosdk/fixtures/sdk-crypto/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
     url: peer1.org1.example.com:7051
   peer1.org2.example.com:
     eventUrl: peer1.org2.example.com:7053
     grpcOptions:
       ssl-target-name-override: peer1.org2.example.com
     tlsCACerts:
-      path: ${GOPATH}/src/github.com/xixuejia/digital-wallet/fabric/gosdk/fixtures/sdk-crypto/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
+      path: ${GOPATH}/src/hfrd/modules/gosdk/fixtures/sdk-crypto/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
     url: peer1.org2.example.com:7051
 version: 1.0.0
 x-type: hlfv1
