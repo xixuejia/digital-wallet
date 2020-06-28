@@ -65,14 +65,15 @@ gosdk chaincode instantiate -c ${WORKDIR}/fixtures/ConnectionProfile_org1.yaml -
 
 sleep 5
 # Loop cc invoke module to catch random errors
-for i in {1..10}
+for i in {1..2}
 do
-  echo "#############################Invoke chaincode samplecc-$i########################"
+  echo "#############################Invoke chaincode samplecc########################"
   ${DOCKER_BASE_CMD} \
   sh -c "gosdk chaincode invoke  -c ${WORKDIR}/fixtures/ConnectionProfile_org1.yaml \
   --chaincodeName samplecc-0 --channelName mychannel0 \
   --chaincodeParams literal~~~invoke#literal~~~put#stringPattern~~~account[0-9]#stringPattern~~~[0-9]{5}#sequentialString~~~*marbles \
   --peers peer0.org1.example.com \
-  --iterationCount 1 --retryCount 5 --concurrencyLimit 1 --logLevel ERROR \
+  --iterationCount 500 --retryCount 5 --concurrencyLimit 200 --logLevel INFO \
+  --iterationInterval 0s \
   || (cat config/mychannel0.yaml && exit 1)"
 done
