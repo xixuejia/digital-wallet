@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -16,7 +17,6 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/util/pathvar"
 	"github.com/xixuejia/viper"
 	"gopkg.in/yaml.v2"
-	"strings"
 )
 
 const ROUTINE_UPPER_LIMIT = 2000
