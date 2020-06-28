@@ -31,9 +31,9 @@ var chaincodeInvokeCmd = &cobra.Command{
 }
 
 const (
-	CC_INVOKE      = "chaincode.invoke"
-	CC_INVOKE_SENT = "chaincode.invoke.sent"
-	CC_INVOKE_FAIL = "chaincode.invoke.fail"
+	ccInvoke     = "chaincode.invoke"
+	ccInvokeSent = "chaincode.invoke.sent"
+	ccInvokeFail = "chaincode.invoke.fail"
 )
 
 func invokeCmd() *cobra.Command {
@@ -80,7 +80,7 @@ func invokeChaincode() error {
 		return errors.WithMessage(err, "unmarshall connection profiles from connection profile error")
 	}
 	if len(peers) == 0 {
-		return errors.New("peers list is required!")
+		return errors.New("peers list is required")
 	}
 	p := peers
 	channelConfig, err := common.GetTempChannelConfigFile(channelName, p)
@@ -96,9 +96,8 @@ func invokeChaincode() error {
 	sdk, err := fabsdk.New(configBackends)
 	if err != nil {
 		return errors.WithMessage(err, "Error creating sdk")
-	} else {
-		common.Logger.Info("sdk initialized successfully!")
 	}
+	common.Logger.Info("sdk initialized successfully!")
 
 	if threads < 1 {
 		// default to 1 go routine
@@ -165,24 +164,24 @@ func invokeChaincode() error {
 				if transientDynamicMap != nil {
 					cc.transientMap = transientDynamicMap
 				}
-				return cc.InvokeChaincode()
+				return cc.invokeChaincode()
 			}
 			// capture ^C os.SIGINT signal
 			go func() {
 				for sig := range c {
 					if sig == os.Interrupt {
 						common.Logger.Info("\nSIGINT signal received, will exit\n")
-						cc.PrintMetrics(CC_INVOKE)
+						cc.PrintMetrics(ccInvoke)
 						os.Exit(1)
 					}
 				}
 			}()
-			common.InitializeMetrics(CC_INVOKE)
+			common.InitializeMetrics(ccInvoke)
 			success, fail, err := common.IterateFunc(base, invokeFunc, false)
 			atomic.AddUint64(&successCount, success)
 			atomic.AddUint64(&failCount, fail)
-			common.TrackCount(CC_INVOKE_FAIL, int64(fail))
-			cc.PrintMetrics(CC_INVOKE)
+			common.TrackCount(ccInvokeFail, int64(fail))
+			cc.PrintMetrics(ccInvoke)
 			errChan <- err
 			return
 		}(i)
@@ -205,8 +204,8 @@ errChanLoop:
 	return nil
 }
 
-func (cc *Chaincode) InvokeChaincode() error {
-	common.TrackCount(CC_INVOKE_SENT, 1)
+func (cc *Chaincode) invokeChaincode() error {
+	common.TrackCount(ccInvokeSent, 1)
 	var err error
 	var argsByte [][]byte
 	for i := 1; i < len(cc.args); i++ {
@@ -214,9 +213,9 @@ func (cc *Chaincode) InvokeChaincode() error {
 	}
 	defer func(start time.Time) {
 		if err == nil {
-			common.TrackCount(CC_INVOKE, 1)
+			common.TrackCount(ccInvoke, 1)
 			common.Logger.Debug(fmt.Sprintf("e2e tx latency: %s", time.Since(start)))
-			common.TrackTime(start, CC_INVOKE)
+			common.TrackTime(start, ccInvoke)
 		}
 	}(time.Now())
 	if cc.queryOnly {
