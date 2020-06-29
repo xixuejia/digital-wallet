@@ -19,7 +19,16 @@ func GenAESKey(passwd string) [32]byte {
 
 // GenAESKeyWithHash will generate AES key by numOfHash of sha256 hashes
 func GenAESKeyWithHash(passwd string, numOfHash int) [32]byte {
-	return sha256.Sum256([]byte(passwd))
+	res := GenAESKey(passwd)
+	if numOfHash <= 1 {
+		return res
+	}
+	numOfHash--
+	for numOfHash > 0 {
+		res = sha256.Sum256(res[:])
+		numOfHash--
+	}
+	return res
 }
 
 // Encrypt will encrypt plain text with aes 256 cbc mode
