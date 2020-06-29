@@ -1,2 +1,3 @@
 .vscode
 fabric/gosdk/gosdk
+fabric/gosdk/config/*.yaml
