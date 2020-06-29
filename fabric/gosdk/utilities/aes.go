@@ -26,15 +26,12 @@ func GenAESKeyWithHash(passwd string, numOfHash int) [sha512.Size256]byte {
 	passwdBytes := []byte(passwd)
 	res512 = sha512.Sum512(passwdBytes)
 	numOfHash--
-	data := make([]byte, sha512.Size+len(passwd))
-	for i := sha512.Size; i < len(data); i++ {
-		data[i] = passwdBytes[i-sha512.Size]
-	}
+	h := sha512.New()
 	for numOfHash > 0 {
-		for i := 0; i < sha512.Size; i++ {
-			data[i] = res512[i]
-		}
-		res512 = sha512.Sum512(data)
+		h.Reset()
+		h.Write(res512[:])
+		h.Write(passwdBytes)
+		copy(res512[:], h.Sum(nil))
 		numOfHash--
 	}
 	var res256 [sha512.Size256]byte
