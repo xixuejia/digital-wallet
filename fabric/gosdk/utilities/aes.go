@@ -5,7 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -13,22 +13,33 @@ import (
 )
 
 // GenAESKey generate aes key from a user defined password
-func GenAESKey(passwd string) [32]byte {
-	return sha256.Sum256([]byte(passwd))
+func GenAESKey(passwd string) [sha512.Size256]byte {
+	return sha512.Sum512_256([]byte(passwd))
 }
 
-// GenAESKeyWithHash will generate AES key by numOfHash of sha256 hashes
-func GenAESKeyWithHash(passwd string, numOfHash int) [32]byte {
-	res := GenAESKey(passwd)
+// GenAESKeyWithHash will generate AES key by numOfHash of sha512 hashes
+func GenAESKeyWithHash(passwd string, numOfHash int) [sha512.Size256]byte {
 	if numOfHash <= 1 {
-		return res
+		return GenAESKey(passwd)
 	}
+	var res512 [sha512.Size]byte
+	passwdBytes := []byte(passwd)
+	res512 = sha512.Sum512(passwdBytes)
 	numOfHash--
+	data := make([]byte, sha512.Size+len(passwd))
+	for i := sha512.Size; i < len(data); i++ {
+		data[i] = passwdBytes[i-sha512.Size]
+	}
 	for numOfHash > 0 {
-		res = sha256.Sum256(res[:])
+		for i := 0; i < sha512.Size; i++ {
+			data[i] = res512[i]
+		}
+		res512 = sha512.Sum512(data)
 		numOfHash--
 	}
-	return res
+	var res256 [sha512.Size256]byte
+	copy(res256[:], res512[:sha512.Size256])
+	return res256
 }
 
 // Encrypt will encrypt plain text with aes 256 cbc mode
