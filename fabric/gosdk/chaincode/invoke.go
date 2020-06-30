@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -49,6 +50,8 @@ func invokeCmd() *cobra.Command {
 	flags.IntVar(&threads, THREADS, 1, "how many threads to send proposal concurrently")
 	flags.StringVar(&fabricVersion, FABRIC_VERSION, "1.1", "Use fabricVersion to define different capabilities. Use format 1.x in fabricVersion")
 	flags.StringVar(&prometheusTargetUrl, PROMETHEUS_TARGET_URL, "", "if set, hfrd will send metrics to this prometheus endpoint")
+	flags.BoolVar(&encryptPrivateKey, encryptPrivateKeyFlag, false, "whether to encrypt user's private key")
+	flags.IntVar(&numOfHashes, numOfHashesFlag, 1, "number of rounds of sha-512 hashes")
 	chaincodeInvokeCmd.MarkFlagRequired(CC_NAME)
 	chaincodeInvokeCmd.MarkFlagRequired(CHANNEL_NAME)
 	chaincodeInvokeCmd.MarkFlagRequired(CC_PARAMS)
@@ -94,6 +97,10 @@ func invokeChaincode() error {
 		return errors.WithMessage(err, "Unable to get config backends")
 	}
 	sdk, err := fabsdk.New(configBackends)
+	if encryptPrivateKey {
+		core := utilities.NewProviderFactory()
+		sdk, err = fabsdk.New(configBackends, fabsdk.WithCorePkg(core))
+	}
 	if err != nil {
 		return errors.WithMessage(err, "Error creating sdk")
 	}
@@ -109,13 +116,26 @@ func invokeChaincode() error {
 	errChan := make(chan error, threads)
 	// TODO: hardcoded to invoke with ADMIN
 	clientContext := sdk.ChannelContext(channelName, fabsdk.WithUser(common.ADMIN), fabsdk.WithOrg(org))
+	if encryptPrivateKey {
+		common.Logger.Info("encrypt private key enabled")
+		basePath := viperConn.GetString("client.cryptoconfig.path")
+		basePath = os.ExpandEnv(basePath)
+		orgCryptoPath := viperConn.GetString(fmt.Sprintf("organizations.%s.cryptoPath", org))
+		orgCryptoPath = strings.ReplaceAll(orgCryptoPath, "{username}", common.ADMIN)
+		signingId, err := utilities.NewSecureIdentity(filepath.Join(basePath, orgCryptoPath), org, numOfHashes)
+		if err != nil {
+			return errors.WithMessage(err, "unable to create signing identity")
+		}
+		clientContext = sdk.ChannelContext(channelName, fabsdk.WithOrg(org),
+			fabsdk.WithIdentity(signingId))
+	}
 	client, err := channel.New(clientContext)
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "unable to create channel client")
 	}
 	invokeClient, err := utils.New(clientContext)
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "unable to create invoke client")
 	}
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
