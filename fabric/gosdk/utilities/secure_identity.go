@@ -14,7 +14,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/msp"
 	"github.com/hyperledger/fabric/bccsp/utils"
@@ -25,14 +27,15 @@ type secureSigningIdentity struct {
 }
 
 type secureIdentity struct {
-	MSPID               string           `protobuf:"bytes,1,opt,name=mspid,proto3" json:"mspid,omitempty"`
-	CertBytes           []byte           `protobuf:"bytes,2,opt,name=idBytes,proto3" json:"idBytes,omitempty"`
+	Mspid               string           `protobuf:"bytes,1,opt,name=mspid,proto3" json:"mspid,omitempty"`
+	CertBytes           []byte           `protobuf:"bytes,2,opt,name=id_bytes,json=idBytes,proto3" json:"id_bytes,omitempty"`
 	pubKey              *ecdsa.PublicKey `json:"-"`
 	randPassword        string           `json:"-"`
 	encryptedPrivateKey string           `json:"-"`
+	numOfHashes         int              `json:"-"`
 }
 
-func NewSecureIdentity(pathToKeyAndCert string, id string) (secureSigningId msp.SigningIdentity, err error) {
+func NewSecureIdentity(pathToKeyAndCert string, id string, numOfHashes int) (secureSigningId msp.SigningIdentity, err error) {
 	var files []os.FileInfo
 	if files, err = ioutil.ReadDir(filepath.Join(pathToKeyAndCert, "signcerts")); err != nil {
 		return
@@ -57,35 +60,40 @@ func NewSecureIdentity(pathToKeyAndCert string, id string) (secureSigningId msp.
 		err = errors.New("invalid ecdsa public key")
 		return
 	}
-	secureId := &secureIdentity{MSPID: id, pubKey: ecdsaPubKey}
+	secureId := &secureIdentity{pubKey: ecdsaPubKey}
 	ski := secureId.SKI()
 	var privateKey []byte
-	if privateKey, err = ioutil.ReadFile(filepath.Join(pathToKeyAndCert, "keystore", hex.EncodeToString(ski)+"_sk")); 
-		err != nil {
+	if privateKey, err = ioutil.ReadFile(filepath.Join(pathToKeyAndCert, "keystore", hex.EncodeToString(ski)+"_sk")); err != nil {
 		return
 	}
 	randPass := make([]byte, 18) // create a random 18 bytes password
 	if _, err = io.ReadFull(rand.Reader, randPass); err != nil {
 		return
 	}
-	aesKey := GenAESKey(string(randPass))
+	aesKey := GenAESKeyWithHash(string(randPass), numOfHashes)
 	var encryptedPrivateKey string
 	if encryptedPrivateKey, err = Encrypt(aesKey[:], string(privateKey)); err != nil {
 		return
 	}
 	return &secureSigningIdentity{
 		&secureIdentity{
-			MSPID:               id,
+			Mspid:               strings.Title(id) + "MSP",
 			CertBytes:           certPemBytes,
 			pubKey:              ecdsaPubKey,
 			randPassword:        string(randPass),
 			encryptedPrivateKey: encryptedPrivateKey,
+			numOfHashes:         numOfHashes,
 		},
 	}, nil
 }
 
 func (ssi *secureSigningIdentity) Sign(msg []byte) ([]byte, error) {
-	aesKey := GenAESKey(ssi.randPassword)
+	digest := sha256.Sum256(msg)
+	return ssi.signDigest(digest[:])
+}
+
+func (ssi *secureSigningIdentity) signDigest(digest []byte) ([]byte, error) {
+	aesKey := GenAESKeyWithHash(ssi.randPassword, ssi.numOfHashes)
 	privateKey, err := Decrypt(aesKey[:], ssi.encryptedPrivateKey)
 	if err != nil {
 		return []byte{}, err
@@ -100,7 +108,6 @@ func (ssi *secureSigningIdentity) Sign(msg []byte) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
-	digest := sha256.Sum256(msg)
 	r, s, err := ecdsa.Sign(rand.Reader, ecdsaPrivateKey, digest[:])
 	if err != nil {
 		return []byte{}, err
@@ -125,8 +132,8 @@ func (ssi *secureSigningIdentity) PrivateKey() core.Key {
 // Identifier returns the identifier of that identity
 func (si *secureIdentity) Identifier() *msp.IdentityIdentifier {
 	return &msp.IdentityIdentifier{
-		ID:    si.MSPID,
-		MSPID: si.MSPID,
+		ID:    si.Mspid,
+		MSPID: si.Mspid,
 	}
 }
 
@@ -136,18 +143,16 @@ func (si *secureIdentity) Verify(msg []byte, sig []byte) error {
 	if err != nil {
 		return fmt.Errorf("Failed unmashalling signature [%s]", err)
 	}
-	digest := sha256.Sum256(msg)
 	k := si.pubKey
 	lowS, err := utils.IsLowS(k, s)
 	if err != nil {
 		return err
 	}
-
 	if !lowS {
 		return fmt.Errorf("invalid S. Must be smaller than half the order [%s][%s]",
 			s, utils.GetCurveHalfOrdersAt(k.Curve))
 	}
-
+	digest := sha256.Sum256(msg)
 	if !ecdsa.Verify(k, digest[:], r, s) {
 		return fmt.Errorf("invalid signature: %s", string(sig))
 	}
@@ -156,7 +161,11 @@ func (si *secureIdentity) Verify(msg []byte, sig []byte) error {
 
 // Serialize converts an identity to bytes
 func (si *secureIdentity) Serialize() ([]byte, error) {
-	return si.CertBytes, nil
+	identity, err := proto.Marshal(si)
+	if err != nil {
+		return nil, err
+	}
+	return identity, nil
 }
 
 // EnrollmentCertificate Returns the underlying ECert representing this user’s identity.
@@ -203,3 +212,16 @@ func (si *secureIdentity) Private() bool {
 func (si *secureIdentity) PublicKey() (core.Key, error) {
 	return si, nil
 }
+
+// Reset resets struct
+func (si *secureIdentity) Reset() {
+	si = &secureIdentity{}
+}
+
+// String converts struct to string reprezentation
+func (si *secureIdentity) String() string {
+	return proto.CompactTextString(si)
+}
+
+// ProtoMessage indicates the identity is Protobuf serializable
+func (si *secureIdentity) ProtoMessage() {}
