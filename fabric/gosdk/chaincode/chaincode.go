@@ -42,6 +42,8 @@ var (
 	fabricVersion         string
 	prometheusTargetUrl   string
 	lang                  string
+	encryptPrivateKey     bool // whether to encrypt user's private key
+	numOfHashes           int  // do numOfHashes with the password to generate aes-256 key to encrypt/decrypt private key
 )
 
 const (
@@ -72,6 +74,9 @@ const (
 	// keys in connection profile
 	CP_PEERS = "peers"
 	CP_ORGS  = "organizations"
+
+	encryptPrivateKeyFlag = "encryptPrivateKey"
+	numOfHashesFlag       = "numOfHashes"
 )
 
 // Cmd returns the cobra command for Chaincode
