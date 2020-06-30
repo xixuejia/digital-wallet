@@ -10,6 +10,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-kit/kit v0.8.0
 	github.com/go-logfmt/logfmt v0.4.0
+	github.com/gogo/protobuf v1.1.1
 	github.com/golang/lint v0.0.0-20180702182130-06c8688daad7 // indirect
 	github.com/golang/mock v1.2.1-0.20190325180204-2105010f04ec
 	github.com/golang/protobuf v1.3.1
