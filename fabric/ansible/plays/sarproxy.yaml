@@ -1,0 +1,34 @@
+- hosts: "{{ var_hosts | default('all') }}"
+  user: ibmadmin
+  gather_facts: yes
+  vars:
+    op: start
+  tasks:
+    - name: "Start sarproxy"
+      shell:
+        cmd: "nohup ./sarproxy &"
+        chdir: "{{ ansible_env.HOME }}/sarproxy"
+      when: op == "start"
+    - name: "Stop sarproxy"
+      shell:
+        cmd: "kill `pgrep sarproxy`"
+      when: op == "stop"
+    - block:
+      - name: install sysstat
+        apt:
+          name: sysstat
+          update_cache: yes
+      - name: Create sarproxy directory
+        file:
+          path: "{{ ansible_env.HOME }}/sarproxy"
+          state: directory
+      - name: Copy sarproxy to remote
+        copy:
+          src: sarproxy-{{ ansible_architecture }}
+          dest: "{{ ansible_env.HOME }}/sarproxy/sarproxy"
+          mode: '0755'
+      - name: Install sysstat
+        become: true
+        apt:
+          name: sysstat
+      when: op == "install"

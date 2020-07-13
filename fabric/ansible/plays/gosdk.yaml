@@ -1,0 +1,40 @@
+- hosts: x86
+  gather_facts: yes
+  tasks:
+    - name: apt update
+      apt:
+        update_cache: yes
+    - name: install dependencies
+      apt:
+        name: gcc,git
+    - name: set arch
+      set_fact:
+        arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+    - name: download go package
+      get_url:
+        url: https://golang.org/dl/go1.14.4.linux-{{ arch }}.tar.gz
+        dest: "{{ ansible_env.HOME }}/go1.14.4.linux-{{ ansible_architecture }}.tar.gz"
+    - name: unarchive go package
+      unarchive:
+        src: "{{ ansible_env.HOME }}/go1.14.4.linux-{{ ansible_architecture }}.tar.gz"
+        dest: /opt
+        remote_src: yes
+    - name: Adding the go binaries in the bashrc files
+      lineinfile: dest={{ ansible_env.HOME }}/.bashrc line='export PATH=$PATH:/opt/go/bin' insertafter='EOF' regexp='export PATH=\$PATH:/opt/go/bin' state=present
+    - name: Adding the gopath in the bashrc files
+      lineinfile: dest={{ ansible_env.HOME }}/.bashrc line='export GOPATH=/opt/gopath' insertafter='EOF' regexp='export GOPATH=/opt/gopath' state=present
+    
+    - name: Create directory
+      file:
+        path: /opt/gopath/src/github.com/xixuejia
+        state: directory
+        mode: '0755'
+    - name: git clone
+      git:
+        repo: https://github.com/xixuejia/digital-wallet.git
+        dest: /opt/gopath/src/github.com/xixuejia/digital-wallet
+        update: yes
+    - name: build go sdk binariy
+      shell: . {{ ansible_env.HOME }}/.bashrc && go build
+      args:
+        chdir: /opt/gopath/src/github.com/xixuejia/digital-wallet/fabric/gosdk
