@@ -44,6 +44,7 @@ var (
 	lang                  string
 	encryptPrivateKey     bool // whether to encrypt user's private key
 	numOfHashes           int  // do numOfHashes with the password to generate aes-256 key to encrypt/decrypt private key
+	queryRatio            float64
 )
 
 const (
@@ -77,6 +78,7 @@ const (
 
 	encryptPrivateKeyFlag = "encryptPrivateKey"
 	numOfHashesFlag       = "numOfHashes"
+	queryRatioFlag        = "queryRatio"
 )
 
 // Cmd returns the cobra command for Chaincode

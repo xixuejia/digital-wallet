@@ -2,6 +2,7 @@ package chaincode
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -33,7 +34,6 @@ var chaincodeInvokeCmd = &cobra.Command{
 
 const (
 	ccInvoke     = "chaincode.invoke"
-	ccInvokeSent = "chaincode.invoke.sent"
 	ccInvokeFail = "chaincode.invoke.fail"
 )
 
@@ -52,6 +52,7 @@ func invokeCmd() *cobra.Command {
 	flags.StringVar(&prometheusTargetUrl, PROMETHEUS_TARGET_URL, "", "if set, hfrd will send metrics to this prometheus endpoint")
 	flags.BoolVar(&encryptPrivateKey, encryptPrivateKeyFlag, false, "whether to encrypt user's private key")
 	flags.IntVar(&numOfHashes, numOfHashesFlag, 1, "number of rounds of sha-512 hashes")
+	flags.Float64Var(&queryRatio, queryRatioFlag, 0, "percentage of query only transactions(0-1)")
 	chaincodeInvokeCmd.MarkFlagRequired(CC_NAME)
 	chaincodeInvokeCmd.MarkFlagRequired(CHANNEL_NAME)
 	chaincodeInvokeCmd.MarkFlagRequired(CC_PARAMS)
@@ -186,6 +187,7 @@ func invokeChaincode() error {
 				}
 				return cc.invokeChaincode()
 			}
+			rand.Seed(time.Now().Unix())
 			// capture ^C os.SIGINT signal
 			go func() {
 				for sig := range c {
@@ -225,7 +227,6 @@ errChanLoop:
 }
 
 func (cc *Chaincode) invokeChaincode() error {
-	common.TrackCount(ccInvokeSent, 1)
 	var err error
 	var argsByte [][]byte
 	for i := 1; i < len(cc.args); i++ {
@@ -238,7 +239,7 @@ func (cc *Chaincode) invokeChaincode() error {
 			common.TrackTime(start, ccInvoke)
 		}
 	}(time.Now())
-	if cc.queryOnly {
+	if cc.queryOnly || rand.Float64() < queryRatio {
 		_, err = cc.client.Query(channel.Request{ChaincodeID: cc.name, Fcn: cc.args[0],
 			Args: argsByte, TransientMap: cc.transientMap}, channel.WithTargetEndpoints(peers...))
 	} else {
