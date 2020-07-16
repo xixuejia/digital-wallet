@@ -6,6 +6,7 @@
       apt:
         update_cache: yes
     - name: install dependencies
+      become: true
       apt:
         name: gcc,git
     - name: set arch
