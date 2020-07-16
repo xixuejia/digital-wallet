@@ -17,6 +17,7 @@
         url: https://golang.org/dl/go1.14.4.linux-{{ arch }}.tar.gz
         dest: "{{ ansible_env.HOME }}/go1.14.4.linux-{{ ansible_architecture }}.tar.gz"
     - name: unarchive go package
+      become: true
       unarchive:
         src: "{{ ansible_env.HOME }}/go1.14.4.linux-{{ ansible_architecture }}.tar.gz"
         dest: /opt
@@ -27,16 +28,19 @@
       lineinfile: dest={{ ansible_env.HOME }}/.bashrc line='export GOPATH=/opt/gopath' insertafter='EOF' regexp='export GOPATH=/opt/gopath' state=present
     
     - name: Create directory
+      become: true
       file:
         path: /opt/gopath/src/github.com/xixuejia
         state: directory
         mode: '0755'
+        owner: "{{ ansible_effective_user_id }}"
+        group: "{{ ansible_effective_group_id }}"
     - name: git clone
       git:
         repo: https://github.com/xixuejia/digital-wallet.git
         dest: /opt/gopath/src/github.com/xixuejia/digital-wallet
         update: yes
     - name: build go sdk binariy
-      shell: . {{ ansible_env.HOME }}/.bashrc && go build
+      shell: . {{ ansible_env.HOME }}/.bashrc && /opt/go/bin/go build
       args:
         chdir: /opt/gopath/src/github.com/xixuejia/digital-wallet/fabric/gosdk
