@@ -33,6 +33,17 @@ type Client struct {
 // RequestOption func for each Opts argument
 type RequestOption func(ctx context.Client, opts *requestOptions) error
 
+//WithTimeout encapsulates key value pairs of timeout type, timeout duration to Options
+func WithTimeout(timeoutType fab.TimeoutType, timeout time.Duration) RequestOption {
+	return func(ctx context.Client, o *requestOptions) error {
+		if o.Timeouts == nil {
+			o.Timeouts = make(map[fab.TimeoutType]time.Duration)
+		}
+		o.Timeouts[timeoutType] = timeout
+		return nil
+	}
+}
+
 // ClientOption describes a functional parameter for the New constructor
 type ClientOption func(*Client) error
 

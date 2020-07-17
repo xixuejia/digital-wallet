@@ -2,6 +2,7 @@ package chaincode
 
 import (
 	"fmt"
+	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -241,10 +242,12 @@ func (cc *Chaincode) invokeChaincode() error {
 	}(time.Now())
 	if cc.queryOnly || rand.Float64() < queryRatio {
 		_, err = cc.client.Query(channel.Request{ChaincodeID: cc.name, Fcn: cc.args[0],
-			Args: argsByte, TransientMap: cc.transientMap}, channel.WithTargetEndpoints(peers...))
+			Args: argsByte, TransientMap: cc.transientMap}, channel.WithTargetEndpoints(peers...),
+			channel.WithTimeout(fab.Query, time.Second*10))
 	} else {
 		_, err = cc.invokeClient.Execute(channel.Request{ChaincodeID: cc.name, Fcn: cc.args[0],
-			Args: argsByte, TransientMap: cc.transientMap}, utils.WithTargetEndpoints(peers...))
+			Args: argsByte, TransientMap: cc.transientMap}, utils.WithTargetEndpoints(peers...),
+			utils.WithTimeout(fab.Execute, time.Second*20))
 	}
 	if err != nil {
 		return errors.WithMessage(err, "failed to execute chaincode")
