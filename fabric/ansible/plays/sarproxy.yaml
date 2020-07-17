@@ -15,6 +15,7 @@
       when: op == "stop"
     - block:
       - name: install sysstat
+        become: true
         apt:
           name: sysstat
           update_cache: yes
