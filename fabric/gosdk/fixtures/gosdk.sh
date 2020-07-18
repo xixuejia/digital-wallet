@@ -9,7 +9,7 @@ echo "Run test in binary mode"
 export SAMPLE_CC_PATH=github.com/xixuejia/digital-wallet/fabric/chaincode/samplecc
 export MARBLES_CC_PATH=github.com/xixuejia/digital-wallet/fabric/chaincode/marbles
 export PATH=$PATH:`pwd`
-go build
+cd .. && go build
 
 applicationCapability=V1_2
 echo "#############################Create channels with channelNamePrefix########################"
