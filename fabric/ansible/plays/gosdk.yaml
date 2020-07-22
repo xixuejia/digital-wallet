@@ -1,5 +1,8 @@
 - hosts: x86
   gather_facts: yes
+  vars:
+    go_version: go1.15beta1.linux
+    # go_version: go1.14.4.linux
   tasks:
     - name: apt update
       become: true
@@ -14,12 +17,17 @@
         arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
     - name: download go package
       get_url:
-        url: https://golang.org/dl/go1.14.4.linux-{{ arch }}.tar.gz
-        dest: "{{ ansible_env.HOME }}/go1.14.4.linux-{{ ansible_architecture }}.tar.gz"
+        url: https://golang.org/dl/{{ go_version }}-{{ arch }}.tar.gz
+        dest: "{{ ansible_env.HOME }}/{{ go_version }}-{{ ansible_architecture }}.tar.gz"
+    - name: remove existing go
+      become: true
+      file:
+        path: /opt/go
+        state: absent
     - name: unarchive go package
       become: true
       unarchive:
-        src: "{{ ansible_env.HOME }}/go1.14.4.linux-{{ ansible_architecture }}.tar.gz"
+        src: "{{ ansible_env.HOME }}/{{ go_version }}-{{ ansible_architecture }}.tar.gz"
         dest: /opt
         remote_src: yes
     - name: Adding the go binaries in the bashrc files
@@ -41,6 +49,6 @@
         dest: /opt/gopath/src/github.com/xixuejia/digital-wallet
         update: yes
     - name: build go sdk binariy
-      shell: . {{ ansible_env.HOME }}/.bashrc && /opt/go/bin/go build
+      shell: /opt/go/bin/go build
       args:
         chdir: /opt/gopath/src/github.com/xixuejia/digital-wallet/fabric/gosdk
