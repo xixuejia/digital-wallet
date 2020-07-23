@@ -57,7 +57,7 @@ func GetConfigBackends(stringPath ...string) (core.ConfigProvider, error) {
 	}, nil
 }
 
-//	GetTempChannelConfigFile will generate the temporary channel yaml file and return the file path
+// GetTempChannelConfigFile will generate the temporary channel yaml file and return the file path
 func GetTempChannelConfigFile(channelID string, peers []string) (string, error) {
 	peersChannel := make(map[string]PeerChannel)
 	for _, peer := range peers {
@@ -94,7 +94,7 @@ func IterateFunc(base *Base, iterFunc func(iterationIndex int) error, sequential
 		routineLimit = 1
 	}
 	errChan := make(chan error, routineLimit)
-	throttle := make(chan struct{}, routineLimit)
+	throttle := make(chan int, routineLimit)
 	var wg sync.WaitGroup
 	defer func() {
 		wg.Wait()
@@ -106,36 +106,40 @@ func IterateFunc(base *Base, iterFunc func(iterationIndex int) error, sequential
 				}
 			}
 		}
-		close(throttle)
 		close(errChan)
 	}()
-	goFunc := func(iterationIndex int) {
+	goFunc := func(throttle <-chan int, errChan chan error, successCount, failCount *uint64) {
 		defer func() {
 			wg.Done()
-			<-throttle
 		}()
-		err := iterFunc(iterationIndex)
-		if err != nil {
-			atomic.AddUint64(&failCount, 1)
-			// check whether we should ignore the list
-			for _, e := range IGNORED_ERRORS {
-				if strings.Contains(err.Error(), e) {
-					Logger.Warn(fmt.Sprintf("Ignoring error: %s", err))
-					return
+		for i := range throttle {
+			err := iterFunc(i)
+			if err != nil {
+				atomic.AddUint64(failCount, 1)
+				// check whether we should ignore the list
+				for _, e := range IGNORED_ERRORS {
+					if strings.Contains(err.Error(), e) {
+						Logger.Warn(fmt.Sprintf("Ignoring error: %s", err))
+						return
+					}
 				}
-			}
-			Logger.Error(fmt.Sprintf("Error in iteration function %d: %s\n", iterationIndex, err))
-			select {
-			case errChan <- err:
-			default:
-				{
-					// in this case errChan is already full
-					return
+				Logger.Error(fmt.Sprintf("Error in iteration function %d: %s\n", i, err))
+				select {
+				case errChan <- err:
+				default:
+					{
+						// in this case errChan is already full
+						return
+					}
 				}
+			} else {
+				atomic.AddUint64(successCount, 1)
 			}
-		} else {
-			atomic.AddUint64(&successCount, 1)
 		}
+	}
+	wg.Add(routineLimit)
+	for i := 0; i < routineLimit; i++ {
+		go goFunc(throttle, errChan, &successCount, &failCount)
 	}
 	// try to parse IterationCount as integer
 	iterationCount, err := strconv.Atoi(base.IterationCount)
@@ -143,9 +147,7 @@ func IterateFunc(base *Base, iterFunc func(iterationIndex int) error, sequential
 		Logger.Info(fmt.Sprintf("iterationCount: %d", iterationCount-base.currentIter))
 	countLoop:
 		for base.CurrentIter() < iterationCount {
-			throttle <- struct{}{}
-			wg.Add(1)
-			go goFunc(base.CurrentIter())
+			throttle <- base.CurrentIter()
 			if base.currentIter != iterationCount-1 {
 				base.Wait()
 			}
@@ -164,6 +166,7 @@ func IterateFunc(base *Base, iterFunc func(iterationIndex int) error, sequential
 			}
 
 		}
+		close(throttle)
 	} else if duration, err := time.ParseDuration(base.IterationCount); err == nil {
 		Logger.Info(fmt.Sprintf("iterationDuration is: %s\n", duration))
 		timer := time.NewTimer(duration)
@@ -173,9 +176,7 @@ func IterateFunc(base *Base, iterFunc func(iterationIndex int) error, sequential
 			case <-timer.C:
 				break durationLoop
 			default:
-				throttle <- struct{}{}
-				wg.Add(1)
-				go goFunc(base.CurrentIter())
+				throttle <- base.CurrentIter()
 				base.Wait()
 				select {
 				case err := <-errChan:
@@ -192,6 +193,7 @@ func IterateFunc(base *Base, iterFunc func(iterationIndex int) error, sequential
 				}
 			}
 		}
+		close(throttle)
 	} else {
 		retErr = errors.New("Error parsing iterationCount: " + base.IterationCount)
 	}
