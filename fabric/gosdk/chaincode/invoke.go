@@ -2,7 +2,6 @@ package chaincode
 
 import (
 	"fmt"
-	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
+	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -243,11 +243,11 @@ func (cc *Chaincode) invokeChaincode() error {
 	if cc.queryOnly || rand.Float64() < queryRatio {
 		_, err = cc.client.Query(channel.Request{ChaincodeID: cc.name, Fcn: cc.args[0],
 			Args: argsByte, TransientMap: cc.transientMap}, channel.WithTargetEndpoints(peers...),
-			channel.WithTimeout(fab.Query, time.Second*10))
+			channel.WithTimeout(fab.Query, time.Second*120))
 	} else {
 		_, err = cc.invokeClient.Execute(channel.Request{ChaincodeID: cc.name, Fcn: cc.args[0],
 			Args: argsByte, TransientMap: cc.transientMap}, utils.WithTargetEndpoints(peers...),
-			utils.WithTimeout(fab.Execute, time.Second*20))
+			utils.WithTimeout(fab.Execute, time.Second*120))
 	}
 	if err != nil {
 		return errors.WithMessage(err, "failed to execute chaincode")
