@@ -243,11 +243,11 @@ func (cc *Chaincode) invokeChaincode() error {
 	if cc.queryOnly || rand.Float64() < queryRatio {
 		_, err = cc.client.Query(channel.Request{ChaincodeID: cc.name, Fcn: cc.args[0],
 			Args: argsByte, TransientMap: cc.transientMap}, channel.WithTargetEndpoints(peers...),
-			channel.WithTimeout(fab.Query, time.Second*120))
+			channel.WithTimeout(fab.Query, time.Second*300))
 	} else {
 		_, err = cc.invokeClient.Execute(channel.Request{ChaincodeID: cc.name, Fcn: cc.args[0],
 			Args: argsByte, TransientMap: cc.transientMap}, utils.WithTargetEndpoints(peers...),
-			utils.WithTimeout(fab.Execute, time.Second*120))
+			utils.WithTimeout(fab.Execute, time.Second*300))
 	}
 	if err != nil {
 		return errors.WithMessage(err, "failed to execute chaincode")
