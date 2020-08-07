@@ -210,20 +210,6 @@ func (curve *CurveParams) doubleJacobian(x, y, z *big.Int) (*big.Int, *big.Int, 
 }
 
 func (curve *CurveParams) ScalarMult(Bx, By *big.Int, k []byte) (*big.Int, *big.Int) {
-	Bz := new(big.Int).SetInt64(1)
-	x, y, z := new(big.Int), new(big.Int), new(big.Int)
-
-	for _, byte := range k {
-		for bitNum := 0; bitNum < 8; bitNum++ {
-			x, y, z = curve.doubleJacobian(x, y, z)
-			if byte&0x80 == 0x80 {
-				x, y, z = curve.addJacobian(Bx, By, Bz, x, y, z)
-			}
-			byte <<= 1
-		}
-	}
-	resX, resY := curve.affineFromJacobian(x, y, z)
-	fmt.Printf("resX: %v, resY: %v\n", resX.Bytes(), resY.Bytes())
 	srcX, srcY, scalar := [48]byte{}, [48]byte{}, [48]byte{}
 	copy(srcX[:], Bx.Bytes())
 	copy(srcY[:], By.Bytes())
@@ -232,9 +218,9 @@ func (curve *CurveParams) ScalarMult(Bx, By *big.Int, k []byte) (*big.Int, *big.
 	if err != nil {
 		fmt.Printf("Error parsing ec p384 kye: %s\n", err)
 	}
+	resX, resY := new(big.Int), new(big.Int)
 	resX.SetBytes(resultX[:])
 	resY.SetBytes(resultY[:])
-	fmt.Printf("PCC resX: %v, resY: %v\n", resX.Bytes(), resY.Bytes())
 	return resX, resY
 }
 
