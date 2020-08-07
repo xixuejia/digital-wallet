@@ -20,6 +20,7 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/msp"
 	"github.com/hyperledger/fabric/bccsp/utils"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/microbench/p384"
 )
 
 type secureSigningIdentity struct {
@@ -100,7 +101,7 @@ func (ssi *secureSigningIdentity) signDigest(digest []byte) ([]byte, error) {
 	}
 	block, _ := pem.Decode([]byte(privateKey))
 	x509Encoded := block.Bytes
-	ecdsaPemPrivateKey, err := x509.ParsePKCS8PrivateKey(x509Encoded)
+	ecdsaPemPrivateKey, err := p384.ParsePKCS8PrivateKey(x509Encoded)
 	ecdsaPrivateKey, ok := ecdsaPemPrivateKey.(*ecdsa.PrivateKey)
 	if !ok {
 		return []byte{}, errors.New("unable to convert pem ecdsa private key")
