@@ -2,6 +2,8 @@ package p384
 
 import (
 	"crypto/elliptic"
+	"fmt"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/microbench/p384/pcc"
 	"math/big"
 	"sync"
 )
@@ -220,8 +222,20 @@ func (curve *CurveParams) ScalarMult(Bx, By *big.Int, k []byte) (*big.Int, *big.
 			byte <<= 1
 		}
 	}
-
-	return curve.affineFromJacobian(x, y, z)
+	resX, resY := curve.affineFromJacobian(x, y, z)
+	fmt.Printf("resX: %v, resY: %v\n", resX.Bytes(), resY.Bytes())
+	srcX, srcY, scalar := [48]byte{}, [48]byte{}, [48]byte{}
+	copy(srcX[:], Bx.Bytes())
+	copy(srcY[:], By.Bytes())
+	copy(scalar[:], k)
+	resultX, resultY, err := pcc.ScalarMultP384(srcX, srcY, scalar)
+	if err != nil {
+		fmt.Printf("Error parsing ec p384 kye: %s\n", err)
+	}
+	resX.SetBytes(resultX[:])
+	resY.SetBytes(resultY[:])
+	fmt.Printf("PCC resX: %v, resY: %v\n", resX.Bytes(), resY.Bytes())
+	return resX, resY
 }
 
 func (curve *CurveParams) ScalarBaseMult(k []byte) (*big.Int, *big.Int) {
