@@ -3,6 +3,7 @@ package microbench
 import (
 	"crypto/x509"
 	"encoding/hex"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/microbench/p384"
 	"testing"
 )
 
@@ -26,6 +27,14 @@ func BenchmarkParseECp384(b *testing.B) {
 	derBytes, _ := hex.DecodeString(pkcs8P384PrivateKeyHex)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		x509.ParsePKCS8PrivateKey(derBytes)
+		p384.ParsePKCS8PrivateKey(derBytes)
+	}
+}
+
+func TestParseECp384(t *testing.T) {
+	derBytes, _ := hex.DecodeString(pkcs8P384PrivateKeyHex)
+	if _, err := p384.ParsePKCS8PrivateKey(derBytes); err != nil {
+		t.Errorf("Error parsing p384 key: %s", err)
+		t.FailNow()
 	}
 }
