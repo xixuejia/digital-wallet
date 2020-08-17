@@ -1,10 +1,10 @@
 package microbench
 
 import (
-	"crypto/x509"
 	"encoding/hex"
-	"github.com/xixuejia/digital-wallet/fabric/gosdk/microbench/p384"
 	"testing"
+
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/microbench/p384"
 )
 
 // Generated using:
@@ -19,7 +19,7 @@ func BenchmarkParseECp256(b *testing.B) {
 	derBytes, _ := hex.DecodeString(pkcs8P256PrivateKeyHex)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		x509.ParsePKCS8PrivateKey(derBytes)
+		p384.ParsePKCS8PrivateKey(derBytes)
 	}
 }
 

@@ -13,3 +13,8 @@ func ScalarMultP384(sourceX, sourceY, scalar [48]byte) (resultX, resultY [48]byt
 	// function stub for platforms that are not IBM Z
 	return [48]byte{}, [48]byte{}, errors.New("function not supported on current platform")
 }
+
+func ScalarMultP256(sourceX, sourceY, scalar [32]byte) (resultX, resultY [32]byte, err error) {
+	// function stub for platforms that are not IBM Z
+	return [32]byte{}, [32]byte{}, errors.New("function not supported on current platform")
+}

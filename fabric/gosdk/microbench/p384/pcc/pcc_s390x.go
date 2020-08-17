@@ -4,6 +4,26 @@ import (
 	"errors"
 )
 
+func ScalarMultP256(sourceX, sourceY, scalar [32]byte) (resultX, resultY [32]byte, err error) {
+	params := [4096]byte{}
+	copy(params[0x40:0x60], sourceX[:])
+	copy(params[0x60:0x80], sourceY[:])
+	copy(params[0x80:0xa0], scalar[:])
+	switch pcc(64, &params) {
+	case 0:
+		// success
+		copy(resultX[:], params[0x00:0x20])
+		copy(resultY[:], params[0x20:0x40])
+		return resultX, resultY, nil
+	case 1:
+		return [32]byte{}, [32]byte{}, errors.New("condition code 1")
+	case 2:
+		return [32]byte{}, [32]byte{}, errors.New("condition code 2")
+	}
+	// should not happen... condition code 3 is handled in assembly
+	return [32]byte{}, [32]byte{}, errors.New("unexpected condition code")
+}
+
 // ScalarMultP384 calls the PCC instruction with the given params.
 // See the Principles of Operation for more information on the
 // parameters this function expects.

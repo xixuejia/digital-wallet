@@ -211,18 +211,36 @@ func (curve *CurveParams) doubleJacobian(x, y, z *big.Int) (*big.Int, *big.Int, 
 }
 
 func (curve *CurveParams) ScalarMult(Bx, By *big.Int, k []byte) (*big.Int, *big.Int) {
-	srcX, srcY, scalar := [48]byte{}, [48]byte{}, [48]byte{}
-	copy(srcX[:], Bx.Bytes())
-	copy(srcY[:], By.Bytes())
-	copy(scalar[:], k)
-	resultX, resultY, err := pcc.ScalarMultP384(srcX, srcY, scalar)
-	if err != nil {
-		fmt.Printf("Error parsing private key with PCC instruction: %s\n", err)
+	l := len(k)
+	switch l {
+	case 48:
+		srcX, srcY, scalar := [48]byte{}, [48]byte{}, [48]byte{}
+		copy(srcX[:], Bx.Bytes())
+		copy(srcY[:], By.Bytes())
+		copy(scalar[:], k)
+		resultX, resultY, err := pcc.ScalarMultP384(srcX, srcY, scalar)
+		if err != nil {
+			fmt.Printf("Error parsing private key with PCC instruction: %s\n", err)
+		}
+		resX, resY := new(big.Int), new(big.Int)
+		resX.SetBytes(resultX[:])
+		resY.SetBytes(resultY[:])
+		return resX, resY
+	case 32:
+		srcX, srcY, scalar := [32]byte{}, [32]byte{}, [32]byte{}
+		copy(srcX[:], Bx.Bytes())
+		copy(srcY[:], By.Bytes())
+		copy(scalar[:], k)
+		resultX, resultY, err := pcc.ScalarMultP256(srcX, srcY, scalar)
+		if err != nil {
+			fmt.Printf("Error parsing private key with PCC instruction: %s\n", err)
+		}
+		resX, resY := new(big.Int), new(big.Int)
+		resX.SetBytes(resultX[:])
+		resY.SetBytes(resultY[:])
+		return resX, resY
 	}
-	resX, resY := new(big.Int), new(big.Int)
-	resX.SetBytes(resultX[:])
-	resY.SetBytes(resultY[:])
-	return resX, resY
+	return new(big.Int), new(big.Int)
 }
 
 func (curve *CurveParams) ScalarBaseMult(k []byte) (*big.Int, *big.Int) {
