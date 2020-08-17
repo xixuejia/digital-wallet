@@ -31,6 +31,13 @@ func BenchmarkParseECp384(b *testing.B) {
 	}
 }
 
+func TestParseECp256(t *testing.T) {
+	derBytes, _ := hex.DecodeString(pkcs8P256PrivateKeyHex)
+	if _, err := p384.ParsePKCS8PrivateKey(derBytes); err != nil {
+		t.Errorf("Error parsing p256 key: %s", err)
+		t.FailNow()
+	}
+}
 func TestParseECp384(t *testing.T) {
 	derBytes, _ := hex.DecodeString(pkcs8P384PrivateKeyHex)
 	if _, err := p384.ParsePKCS8PrivateKey(derBytes); err != nil {
