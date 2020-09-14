@@ -17,7 +17,7 @@ echo "#############################Create channels with channelNamePrefix#######
   --applicationCapability ${applicationCapability} --channelNamePrefix mychannel \
   --channelConsortium SampleConsortium \
   --channelOrgs org1,org2 --ordererName orderer.example.com \
-  --iterationCount 2 --iterationInterval 0.1s --retryCount 5 --logLevel DEBUG
+  --iterationCount 20 --iterationInterval 0.1s --retryCount 5 --logLevel DEBUG
 
 echo "#############################Create channels with channelNameList########################"
 ./gosdk channel create -c ${WORKDIR}/fixtures/ConnectionProfile_org1.yaml \
@@ -29,7 +29,7 @@ echo "#############################Create channels with channelNameList#########
 echo "#############################Join org1 into channels########################"
 ./gosdk channel join -c ${WORKDIR}/fixtures/ConnectionProfile_org1.yaml --channelNamePrefix mychannel \
 --peers peer0.org1.example.com --ordererName orderer.example.com \
---iterationCount 2 --iterationInterval 0.1s --retryCount 5 --logLevel DEBUG
+--iterationCount 20 --iterationInterval 0.1s --retryCount 5 --logLevel DEBUG
 
 
 echo "############################# Replace orderer addresses ########################"
@@ -38,7 +38,7 @@ echo "############################# Replace orderer addresses ##################
   --ordererOrgName ordererorg --ordererName orderer.example.com --peers peer0.org1.example.com \
   --ordererAddresses orderer.example.com:7050 \
   --batchTimeout 1s --maxMessageCount 200 --preferredMaxBytes 103802353 --anchorPeers peer0.org1.example.com:7051 \
-  --iterationCount 1 --iterationInterval 2s --retryCount 5 --logLevel DEBUG
+  --iterationCount 20 --iterationInterval 2s --retryCount 5 --logLevel DEBUG
 
 echo "#############################Query org1 channels########################"
 ./gosdk channel query -c ${WORKDIR}/fixtures/ConnectionProfile_org1.yaml --channelName mychannel0 --logLevel INFO \
@@ -57,4 +57,4 @@ echo "#############################Instantiate chaincode samplecc-0 with policy 
   --channelNamePrefix mychannel --prefixOffset 0 --path ${SAMPLE_CC_PATH} \
   --policyStr "OR ('Org1MSP.member','Org2MSP.member')" \
   --peers peer0.org1.example.com \
-  --iterationCount 1 --iterationInterval 0.2s --retryCount 5
+  --iterationCount 20 --iterationInterval 0.2s --retryCount 5
