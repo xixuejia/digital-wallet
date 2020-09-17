@@ -44,13 +44,13 @@ entityMatchers:
   - mappedHost: orderer.example.com
     pattern: (\w*)orderer.example.com(\w*)
     sslTargetOverrideUrlSubstitutionExp: orderer.example.com
-    urlSubstitutionExp: 10.1.9.100:7050
+    urlSubstitutionExp: 10.1.9.249:7050
   peer:
   - eventUrlSubstitutionExp: localhost:7053
     mappedHost: peer0.org1.example.com
     pattern: (\w*)peer0.org1.example.com(\w*)
     sslTargetOverrideUrlSubstitutionExp: peer0.org1.example.com
-    urlSubstitutionExp: 10.1.9.100:7051
+    urlSubstitutionExp: 10.1.9.249:7051
   - eventUrlSubstitutionExp: localhost:8053
     mappedHost: peer1.org1.example.com
     pattern: (\w*)peer1.org1.example.com(\w*)
@@ -73,7 +73,7 @@ orderers:
       ssl-target-name-override: orderer.example.com
     tlsCACerts:
       path: ${GOPATH}/src/github.com/xixuejia/digital-wallet/fabric/gosdk/fixtures/sdk-crypto/ordererorg/tlsca/tlsca.example.com-cert.pem
-    url: 10.1.9.100:7050
+    url: 10.1.9.249:7050
 organizations:
   org1:
     certificateAuthorities:
