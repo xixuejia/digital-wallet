@@ -1,0 +1,17 @@
+
+- hosts: s390x
+  tasks:
+    - name: run gosdk wkld
+      shell:
+        cmd: "GOPATH=/opt/gopath ./gosdk chaincode invoke  -c fixtures/ConnectionProfile_org1.yaml  \
+--chaincodeName samplecc-0 --channelName {{inventory_hostname}}   \
+--chaincodeParams literal~~~invoke#literal~~~put#stringPattern~~~\
+account[0-9]#stringPattern~~~[0-9]{5}#sequentialString~~~*marbles \
+--peers peer0.org1.example.com --iterationCount 5m --concurrencyLimit 1000 \
+--logLevel INFO   --iterationInterval 0s --queryRatio 0.7 --encryptPrivateKey --numOfHashes=1000"
+        chdir: /opt/gopath/src/github.com/xixuejia/digital-wallet/fabric/gosdk
+      register: gosdk
+      async: 330
+      poll: 5
+    - name: print gosdk output
+      debug: msg="{{ gosdk.stdout }}"
