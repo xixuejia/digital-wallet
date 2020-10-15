@@ -1,0 +1,45 @@
+- hosts: hpvs
+  vars:
+    pubkeys: |
+      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDUfSQw634AoCSrJ1o3/LUc+I+X3PQSn4+Du/hecQVEp5dnxGOf3ezI/OGovtsG4gswwLjr6ss2e31uR7nU6KE80UUXoSVYWx4StxSaVBla/5aqmmrkw4SGmNbQCsiPuUEZsrirx8Ki9ucOlAzWp2N5ctKGsvC08cRkyIHTIEwNvbTxhfO/WP1LVCkaRvczGI6mcDBKls4z97UUc4ySqecT5pvVbwTYWjA+7RmCwxTyiXCmd+BdhKBrkn1+ZenEkUxz6B3R2fPPAqmUT/5B+koTCsFHPDrHWTHAysI4urWBSyLHWdX22lph/r9K+CD2fowuUSmMGjrtRszsg/tSkO/L xixuejia@Xis-MacBook-Pro
+      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKtHQdeS1BmcQ4DrXWBl5Bdpca+S5j5yT1591/8qNnpVeAIkmO2zuxI0rpWF6lhR8UJJBUa/ZOKzlm2O4a3RwVH+ureUbXehYOs32alV5crhw1vBw6Jl4LpQ1SoNvpKuuE7sYevHJEPHyaUpXYzjSg3hilISDdGUvjzUAm6D4bx1C5sB/vDsWnv4wD85uWutBKRa7sAuo8v7Yn7cgwXoeerbPA8JCQ5ymaRxS9otEd8uK86Ju1T9ObJeZcMOoKPqVtltjgdUaF25EdB2aBtVjSAFQDn/rrLUsRnW+bjZvDkjPrtT6e5idOcjq/p0WPt/STW2O7eGhJmNIv9+EYCwOz root@hpvs-xixue
+  tasks:
+    - name: install dependencies
+      become: true
+      apt:
+        name: tmux,htop,sysstat,libsnmp30,libldap-2.4-2,curl,psmisc,vim,gnupg,sshfs,rsync,nfs-common,lsscsi,gawk,kmod,bsdmainutils,binutils,binutils-s390x-linux-gnu
+        update_cache: yes
+    - name: echo deb1
+      become: true
+      shell:
+        cmd: echo "deb http://ddebs.ubuntu.com bionic main restricted universe multiverse" | tee -a /etc/apt/sources.list.d/ddebs.list
+    - name: echo deb2
+      become: true
+      shell:
+        cmd: echo "deb http://ddebs.ubuntu.com bionic-updates main restricted universe multiverse" | tee -a /etc/apt/sources.list.d/ddebs.list
+    - name: add key
+      become: true
+      shell:
+        cmd: apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C8CAB6595FDFF622
+    - name: apt install
+      become: true
+      shell:
+        cmd: apt-get update && apt-get install -y linux-image-$(uname -r)-dbgsym linux-tools-generic linux-tools-$(uname -r)
+    - name: Copy deb pkgs
+      copy:
+        src: s390-perftools-2020-0507.s390x.deb
+        dest: "{{ ansible_env.HOME }}/"
+        mode: '0755'
+    - name: Copy deb pkgs
+      copy:
+        src: s390-perftools-mapping-2020-0507.s390x.deb
+        dest: "{{ ansible_env.HOME }}/"
+        mode: '0755'
+    - name: install pkgs
+      become: true
+      shell:
+        cmd: dpkg -i {{ ansible_env.HOME }}/*.deb
+    - name: configure authorized hosts
+      copy:
+        content: "{{ pubkeys }}"
+        dest: "{{ ansible_env.HOME }}/.ssh/authorized_keys"
