@@ -1,4 +1,4 @@
-- hosts: x86
+- hosts: s390x
   gather_facts: yes
   vars:
     go_version: go1.15beta1.linux
@@ -15,9 +15,13 @@
     - name: set arch
       set_fact:
         arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
-    - name: download go package
-      get_url:
-        url: https://golang.org/dl/{{ go_version }}-{{ arch }}.tar.gz
+    # - name: download go package
+    #   get_url:
+    #     url: https://golang.org/dl/{{ go_version }}-{{ arch }}.tar.gz
+    #     dest: "{{ ansible_env.HOME }}/{{ go_version }}-{{ ansible_architecture }}.tar.gz"
+    - name: Copy go install package
+      copy:
+        src: "{{ go_version }}-{{ arch }}.tar.gz"
         dest: "{{ ansible_env.HOME }}/{{ go_version }}-{{ ansible_architecture }}.tar.gz"
     - name: remove existing go
       become: true
@@ -48,6 +52,7 @@
         repo: https://github.com/xixuejia/digital-wallet.git
         dest: /opt/gopath/src/github.com/xixuejia/digital-wallet
         update: yes
+        force: yes
     - name: build go sdk binariy
       shell: /opt/go/bin/go build
       args:
