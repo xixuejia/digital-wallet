@@ -20,6 +20,7 @@ require (
 	github.com/hyperledger/fabric v1.4.0
 	github.com/hyperledger/fabric-lib-go v1.0.0
 	github.com/hyperledger/fabric-sdk-go v1.0.0-alpha4.0.20190326200943-658cc4a5662d
+	github.com/ibm-developer/ibm-cloud-hyperprotectcrypto v0.0.0-20200403150830-6c6406531f08
 	github.com/inconshreveable/mousetrap v1.0.0
 	github.com/kisielk/gotool v1.0.0 // indirect
 	github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515
@@ -36,6 +37,7 @@ require (
 	github.com/prometheus/common v0.2.0
 	github.com/prometheus/procfs v0.0.0-20190322151404-55ae3d9d5573
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
+	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cast v1.3.0
 	github.com/spf13/cobra v0.0.3

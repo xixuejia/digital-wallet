@@ -43,8 +43,13 @@ var (
 	prometheusTargetUrl   string
 	lang                  string
 	encryptPrivateKey     bool // whether to encrypt user's private key
+	useHPCS               bool // whether to encrypt user's private key with HPCS
 	numOfHashes           int  // do numOfHashes with the password to generate aes-256 key to encrypt/decrypt private key
 	queryRatio            float64
+	hpcsEndpoint          string // the endpoint of hpcs instance
+	hpcsAPIKey            string
+	hpcsInstanceID        string
+	hpcsAddress           string
 )
 
 const (
@@ -79,6 +84,12 @@ const (
 	encryptPrivateKeyFlag = "encryptPrivateKey"
 	numOfHashesFlag       = "numOfHashes"
 	queryRatioFlag        = "queryRatio"
+
+	useHPCSFlag        = "useHPCS"
+	hpcsEndpointFlag   = "hpcsEndpoint"
+	hpcsAPIKeyFlag     = "hpcsAPIKey"
+	hpcsInstanceIDFlag = "hpcsInstanceID"
+	hpcsAddressFlag    = "hpcsAddress"
 )
 
 // Cmd returns the cobra command for Chaincode

@@ -21,6 +21,7 @@ import (
 	"github.com/xixuejia/digital-wallet/fabric/gosdk/chaincode/utils"
 	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 	"github.com/xixuejia/digital-wallet/fabric/gosdk/utilities"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/utilities/hpcs"
 )
 
 var chaincodeInvokeCmd = &cobra.Command{
@@ -54,6 +55,11 @@ func invokeCmd() *cobra.Command {
 	flags.BoolVar(&encryptPrivateKey, encryptPrivateKeyFlag, false, "whether to encrypt user's private key")
 	flags.IntVar(&numOfHashes, numOfHashesFlag, 1, "number of rounds of sha-512 hashes")
 	flags.Float64Var(&queryRatio, queryRatioFlag, 0, "percentage of query only transactions(0-1)")
+	flags.BoolVar(&useHPCS, useHPCSFlag, false, "whetehr to encrypt user's private key with HPCS instance")
+	flags.StringVar(&hpcsEndpoint, hpcsEndpointFlag, "https://iam.cloud.ibm.com", "the endpoint for hpcs instance")
+	flags.StringVar(&hpcsAPIKey, hpcsAPIKeyFlag, "", "the api key of hpcs instance")
+	flags.StringVar(&hpcsInstanceID, hpcsInstanceIDFlag, "", "the instance id of hpcs")
+	flags.StringVar(&hpcsAddress, hpcsAddressFlag, "", "the address of hpcs instance")
 	chaincodeInvokeCmd.MarkFlagRequired(CC_NAME)
 	chaincodeInvokeCmd.MarkFlagRequired(CHANNEL_NAME)
 	chaincodeInvokeCmd.MarkFlagRequired(CC_PARAMS)
@@ -103,6 +109,10 @@ func invokeChaincode() error {
 		core := utilities.NewProviderFactory()
 		sdk, err = fabsdk.New(configBackends, fabsdk.WithCorePkg(core))
 	}
+	if useHPCS {
+		core := hpcs.NewProviderFactory()
+		sdk, err = fabsdk.New(configBackends, fabsdk.WithCorePkg(core))
+	}
 	if err != nil {
 		return errors.WithMessage(err, "Error creating sdk")
 	}
@@ -118,18 +128,28 @@ func invokeChaincode() error {
 	errChan := make(chan error, threads)
 	// TODO: hardcoded to invoke with ADMIN
 	clientContext := sdk.ChannelContext(channelName, fabsdk.WithUser(common.ADMIN), fabsdk.WithOrg(org))
+	basePath := viperConn.GetString("client.cryptoconfig.path")
+	basePath = os.ExpandEnv(basePath)
+	orgCryptoPath := viperConn.GetString(fmt.Sprintf("organizations.%s.cryptoPath", org))
+	orgCryptoPath = strings.ReplaceAll(orgCryptoPath, "{username}", common.ADMIN)
 	if encryptPrivateKey {
 		common.Logger.Info("encrypt private key enabled")
-		basePath := viperConn.GetString("client.cryptoconfig.path")
-		basePath = os.ExpandEnv(basePath)
-		orgCryptoPath := viperConn.GetString(fmt.Sprintf("organizations.%s.cryptoPath", org))
-		orgCryptoPath = strings.ReplaceAll(orgCryptoPath, "{username}", common.ADMIN)
-		signingId, err := utilities.NewSecureIdentity(filepath.Join(basePath, orgCryptoPath), org, numOfHashes)
+		signingID, err := utilities.NewSecureIdentity(filepath.Join(basePath, orgCryptoPath), org, numOfHashes)
 		if err != nil {
 			return errors.WithMessage(err, "unable to create signing identity")
 		}
 		clientContext = sdk.ChannelContext(channelName, fabsdk.WithOrg(org),
-			fabsdk.WithIdentity(signingId))
+			fabsdk.WithIdentity(signingID))
+	}
+	if useHPCS {
+		common.Logger.Info("using HPCS to encrypt private key")
+		signingID, err := hpcs.NewSecureIdentity(filepath.Join(basePath, orgCryptoPath),
+			"Org1MSP", hpcsAddress, hpcsAPIKey, hpcsEndpoint, hpcsInstanceID)
+		if err != nil {
+			return errors.WithMessage(err, "unable to create signing identity")
+		}
+		clientContext = sdk.ChannelContext(channelName, fabsdk.WithOrg(org),
+			fabsdk.WithIdentity(signingID))
 	}
 	client, err := channel.New(clientContext)
 	if err != nil {
