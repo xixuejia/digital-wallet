@@ -22,6 +22,7 @@ import (
 	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 	"github.com/xixuejia/digital-wallet/fabric/gosdk/utilities"
 	"github.com/xixuejia/digital-wallet/fabric/gosdk/utilities/hpcs"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/utilities/vsock"
 )
 
 var chaincodeInvokeCmd = &cobra.Command{
@@ -60,6 +61,9 @@ func invokeCmd() *cobra.Command {
 	flags.StringVar(&hpcsAPIKey, hpcsAPIKeyFlag, "", "the api key of hpcs instance")
 	flags.StringVar(&hpcsInstanceID, hpcsInstanceIDFlag, "", "the instance id of hpcs")
 	flags.StringVar(&hpcsAddress, hpcsAddressFlag, "", "the address of hpcs instance")
+	flags.BoolVar(&useVSOCK, useVSOCKFlag, false, "whether to use vsock service to do private key sign operation")
+	flags.IntVar(&vsockCID, vsockCIDFlag, 0, "the context ID of vsock sign service")
+	flags.IntVar(&vsockPort, vsockPortFlag, 996, "the port of vsock sign service")
 	chaincodeInvokeCmd.MarkFlagRequired(CC_NAME)
 	chaincodeInvokeCmd.MarkFlagRequired(CHANNEL_NAME)
 	chaincodeInvokeCmd.MarkFlagRequired(CC_PARAMS)
@@ -112,6 +116,9 @@ func invokeChaincode() error {
 	if useHPCS {
 		core := hpcs.NewProviderFactory()
 		sdk, err = fabsdk.New(configBackends, fabsdk.WithCorePkg(core))
+	} else if useVSOCK {
+		core := vsock.NewProviderFactory()
+		sdk, err = fabsdk.New(configBackends, fabsdk.WithCorePkg(core))
 	}
 	if err != nil {
 		return errors.WithMessage(err, "Error creating sdk")
@@ -150,6 +157,13 @@ func invokeChaincode() error {
 		}
 		clientContext = sdk.ChannelContext(channelName, fabsdk.WithOrg(org),
 			fabsdk.WithIdentity(signingID))
+	} else if useVSOCK {
+		common.Logger.Info("using vsock sign service")
+		signingID, err := vsock.NewSecureIdentity(vsockCID, vsockPort, viper.GetInt(common.CONCURRENCY_LIMIT), "Org1MSP", filepath.Join(basePath, orgCryptoPath))
+		if err != nil {
+			return errors.WithMessage(err, "unable to create vsock signing identity")
+		}
+		clientContext = sdk.ChannelContext(channelName, fabsdk.WithOrg(org), fabsdk.WithIdentity(signingID))
 	}
 	client, err := channel.New(clientContext)
 	if err != nil {
