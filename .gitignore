@@ -2,3 +2,7 @@
 .idea
 fabric/gosdk/gosdk
 fabric/gosdk/config/*.yaml
+
+*.tar.gz
+*.zip
+*.deb
