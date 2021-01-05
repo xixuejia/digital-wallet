@@ -64,6 +64,7 @@ func invokeCmd() *cobra.Command {
 	flags.BoolVar(&useVSOCK, useVSOCKFlag, false, "whether to use vsock service to do private key sign operation")
 	flags.IntVar(&vsockCID, vsockCIDFlag, 0, "the context ID of vsock sign service")
 	flags.IntVar(&vsockPort, vsockPortFlag, 996, "the port of vsock sign service")
+	flags.IntVar(&vsockConnections, vsockConnectionsFlag, 10, "connections in vsock connection pool")
 	chaincodeInvokeCmd.MarkFlagRequired(CC_NAME)
 	chaincodeInvokeCmd.MarkFlagRequired(CHANNEL_NAME)
 	chaincodeInvokeCmd.MarkFlagRequired(CC_PARAMS)
@@ -159,7 +160,7 @@ func invokeChaincode() error {
 			fabsdk.WithIdentity(signingID))
 	} else if useVSOCK {
 		common.Logger.Info("using vsock sign service")
-		signingID, err := vsock.NewSecureIdentity(vsockCID, vsockPort, 20, "Org1MSP", filepath.Join(basePath, orgCryptoPath))
+		signingID, err := vsock.NewSecureIdentity(vsockCID, vsockPort, vsockConnections, "Org1MSP", filepath.Join(basePath, orgCryptoPath))
 		if err != nil {
 			return errors.WithMessage(err, "unable to create vsock signing identity")
 		}

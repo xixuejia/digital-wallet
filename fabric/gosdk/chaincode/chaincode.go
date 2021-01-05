@@ -53,6 +53,7 @@ var (
 	useVSOCK              bool // whether to use vsock connection to do sign. Select ONLY 1 of 1)ecryptPrivateKey 2)useHPCS 3)useVSOCK
 	vsockCID              int
 	vsockPort             int
+	vsockConnections      int // how many connections in connection pool
 )
 
 const (
@@ -94,9 +95,10 @@ const (
 	hpcsInstanceIDFlag = "hpcsInstanceID"
 	hpcsAddressFlag    = "hpcsAddress"
 
-	useVSOCKFlag  = "useVSOCK"
-	vsockCIDFlag  = "vsockCID"
-	vsockPortFlag = "vsockPort"
+	useVSOCKFlag         = "useVSOCK"
+	vsockCIDFlag         = "vsockCID"
+	vsockPortFlag        = "vsockPort"
+	vsockConnectionsFlag = "vsockConnections"
 )
 
 // Cmd returns the cobra command for Chaincode
