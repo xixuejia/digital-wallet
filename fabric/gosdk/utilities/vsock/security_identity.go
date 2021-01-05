@@ -31,9 +31,10 @@ type secureSigningIdentity struct {
 }
 
 type secureIdentity struct {
-	Mspid   string
-	workers *workers
-	pubKey  *ecdsa.PublicKey `json:"-"`
+	Mspid     string `protobuf:"bytes,1,opt,name=mspid,proto3" json:"mspid,omitempty"`
+	CertBytes []byte `protobuf:"bytes,2,opt,name=id_bytes,json=idBytes,proto3" json:"id_bytes,omitempty"`
+	workers   *workers
+	pubKey    *ecdsa.PublicKey `json:"-"`
 }
 
 func NewSecureIdentity(cid, port, maxConnections int, mspID, pathToKeyAndCert string) (secureSigningId msp.SigningIdentity, err error) {
@@ -63,9 +64,10 @@ func NewSecureIdentity(cid, port, maxConnections int, mspID, pathToKeyAndCert st
 	}
 	return &secureSigningIdentity{
 		&secureIdentity{
-			pubKey:  ecdsaPubKey,
-			Mspid:   mspID,
-			workers: newWorkers(cid, port, maxConnections),
+			CertBytes: certPemBytes,
+			pubKey:    ecdsaPubKey,
+			Mspid:     mspID,
+			workers:   newWorkers(cid, port, maxConnections),
 		},
 	}, nil
 }
