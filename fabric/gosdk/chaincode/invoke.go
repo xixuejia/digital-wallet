@@ -159,7 +159,7 @@ func invokeChaincode() error {
 			fabsdk.WithIdentity(signingID))
 	} else if useVSOCK {
 		common.Logger.Info("using vsock sign service")
-		signingID, err := vsock.NewSecureIdentity(vsockCID, vsockPort, viper.GetInt(common.CONCURRENCY_LIMIT), "Org1MSP", filepath.Join(basePath, orgCryptoPath))
+		signingID, err := vsock.NewSecureIdentity(vsockCID, vsockPort, 20, "Org1MSP", filepath.Join(basePath, orgCryptoPath))
 		if err != nil {
 			return errors.WithMessage(err, "unable to create vsock signing identity")
 		}

@@ -62,12 +62,16 @@ func NewSecureIdentity(cid, port, maxConnections int, mspID, pathToKeyAndCert st
 		err = errors.New("invalid ecdsa public key")
 		return
 	}
+	ws, err := newWorkers(cid, port, maxConnections)
+	if err != nil {
+		return nil, err
+	}
 	return &secureSigningIdentity{
 		&secureIdentity{
 			CertBytes: certPemBytes,
 			pubKey:    ecdsaPubKey,
 			Mspid:     mspID,
-			workers:   newWorkers(cid, port, maxConnections),
+			workers:   ws,
 		},
 	}, nil
 }
@@ -190,28 +194,27 @@ func newWorker(cid, port int) (*worker, error) {
 func (ws *workers) sign(digest []byte) ([]byte, error) {
 	var w *worker
 	var err error
-	select {
-	case w = <-ws.availableWorkers:
-		break
-	default:
-		w, err = newWorker(ws.cid, ws.port)
-		if err != nil {
-			return []byte{}, err
-		}
-	}
+	w = <-ws.availableWorkers
 	sig, err := w.sign(digest)
-	select { // give the worker back to the pool if there's room in the pool
-	case ws.availableWorkers <- w:
-	default:
-		w.close() // there's no room in the pool, close the conneciton
-	}
+	ws.availableWorkers <- w // give it back after use
 	return sig, err
 }
 
-func newWorkers(cid, port, maxConnections int) *workers {
-	return &workers{
+func newWorkers(cid, port, maxConnections int) (*workers, error) {
+	if maxConnections < 1 {
+		return nil, fmt.Errorf("maxConnections(%d) should be larger than 0", maxConnections)
+	}
+	res := &workers{
 		cid:              cid,
 		port:             port,
 		availableWorkers: make(chan *worker, maxConnections),
 	}
+	for i := 0; i < maxConnections; i++ {
+		w, err := newWorker(cid, port)
+		if err != nil {
+			return nil, err
+		}
+		res.availableWorkers <- w
+	}
+	return res, nil
 }
