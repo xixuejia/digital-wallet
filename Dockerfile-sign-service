@@ -5,7 +5,7 @@ COPY fabric fabric
 RUN ls
 RUN cd fabric/gosdk/utilities/sign-service && go build .
 
-FROM ubuntu:20.04
+FROM amazonlinux:2
 WORKDIR /root
 COPY --from=builder /go/src/github.com/xixuejia/digital-wallet/fabric/gosdk/utilities/sign-service/sign-service .
 COPY fabric/gosdk/fixtures/sdk-crypto/org1.example.com/users/Admin@org1.example.com/msp/keystore/168d8ee8362ed9cf876fea0b5832d259797a7e8cbfaf7cd8442ea5263910b814_sk key.pem
