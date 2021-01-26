@@ -19,6 +19,8 @@ COPY fabric/gosdk/fixtures/sdk-crypto/org1.example.com/users/Admin@org1.example.
 RUN chmod +x sign-service
 COPY --from=socat-builder /usr/local/bin/socat /usr/local/bin/socat
 # sarproxy binary should be prebuilt and placed in this folder
-# COPY sarproxy /usr/local/bin/sarproxy
+COPY sarproxy /usr/local/bin/sarproxy
 RUN yum install -y rng-tools
-CMD rngd; socat VSOCK-LISTEN:8080,reuseaddr,fork TCP4:localhost:8080; /root/sign-service -k /root/key.pem -s -p 1024
+COPY boot.sh boot.sh
+RUN chmod +x boot.sh
+CMD ./boot.sh
