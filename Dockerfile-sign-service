@@ -5,10 +5,20 @@ COPY fabric fabric
 RUN ls
 RUN cd fabric/gosdk/utilities/sign-service && go build .
 
+FROM ubuntu:focal AS socat-builder
+RUN apt update
+RUN apt install -y autoconf git gcc make yodl
+RUN git clone https://github.com/stefano-garzarella/socat-vsock.git
+RUN cd socat-vsock && git checkout vsock && autoconf && \
+  ./configure && make && make install
+
 FROM amazonlinux:2
 WORKDIR /root
 COPY --from=builder /go/src/github.com/xixuejia/digital-wallet/fabric/gosdk/utilities/sign-service/sign-service .
 COPY fabric/gosdk/fixtures/sdk-crypto/org1.example.com/users/Admin@org1.example.com/msp/keystore/168d8ee8362ed9cf876fea0b5832d259797a7e8cbfaf7cd8442ea5263910b814_sk key.pem
 RUN chmod +x sign-service
+COPY --from=socat-builder /usr/local/bin/socat /usr/local/bin/socat
+# sarproxy binary should be prebuilt and placed in this folder
+# COPY sarproxy /usr/local/bin/sarproxy
 RUN yum install -y rng-tools
-CMD rngd; /root/sign-service -k /root/key.pem -s -p 1024
+CMD rngd; socat VSOCK-LISTEN:8080,reuseaddr,fork TCP4:localhost:8080; /root/sign-service -k /root/key.pem -s -p 1024
