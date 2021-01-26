@@ -20,7 +20,7 @@ RUN chmod +x sign-service
 COPY --from=socat-builder /usr/local/bin/socat /usr/local/bin/socat
 # sarproxy binary should be prebuilt and placed in this folder
 COPY sarproxy /usr/local/bin/sarproxy
-RUN yum install -y rng-tools
+RUN yum install -y rng-tools net-tools
 COPY boot.sh boot.sh
 RUN chmod +x boot.sh
 CMD /root/boot.sh
