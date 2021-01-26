@@ -23,4 +23,4 @@ COPY sarproxy /usr/local/bin/sarproxy
 RUN yum install -y rng-tools
 COPY boot.sh boot.sh
 RUN chmod +x boot.sh
-CMD ./boot.sh
+CMD /root/boot.sh
