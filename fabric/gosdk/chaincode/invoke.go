@@ -61,6 +61,7 @@ func invokeCmd() *cobra.Command {
 	flags.StringVar(&hpcsAPIKey, hpcsAPIKeyFlag, "", "the api key of hpcs instance")
 	flags.StringVar(&hpcsInstanceID, hpcsInstanceIDFlag, "", "the instance id of hpcs")
 	flags.StringVar(&hpcsAddress, hpcsAddressFlag, "", "the address of hpcs instance")
+	flags.IntVar(&unwrapInterval, unwrapIntervalFlag, 2, "the interval(unit: second) to refresh the unwrapped EC key with hpcs instance")
 	flags.BoolVar(&useVSOCK, useVSOCKFlag, false, "whether to use vsock service to do private key sign operation")
 	flags.IntVar(&vsockCID, vsockCIDFlag, 0, "the context ID of vsock sign service")
 	flags.IntVar(&vsockPort, vsockPortFlag, 996, "the port of vsock sign service")
@@ -152,7 +153,7 @@ func invokeChaincode() error {
 	if useHPCS {
 		common.Logger.Info("using HPCS to encrypt private key")
 		signingID, err := hpcs.NewSecureIdentity(filepath.Join(basePath, orgCryptoPath),
-			"Org1MSP", hpcsAddress, hpcsAPIKey, hpcsEndpoint, hpcsInstanceID)
+			"Org1MSP", hpcsAddress, hpcsAPIKey, hpcsEndpoint, hpcsInstanceID, unwrapInterval)
 		if err != nil {
 			return errors.WithMessage(err, "unable to create signing identity")
 		}

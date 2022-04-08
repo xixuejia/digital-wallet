@@ -50,6 +50,7 @@ var (
 	hpcsAPIKey            string
 	hpcsInstanceID        string
 	hpcsAddress           string
+	unwrapInterval        int
 	useVSOCK              bool // whether to use vsock connection to do sign. Select ONLY 1 of 1)ecryptPrivateKey 2)useHPCS 3)useVSOCK
 	vsockCID              int
 	vsockPort             int
@@ -94,6 +95,7 @@ const (
 	hpcsAPIKeyFlag     = "hpcsAPIKey"
 	hpcsInstanceIDFlag = "hpcsInstanceID"
 	hpcsAddressFlag    = "hpcsAddress"
+	unwrapIntervalFlag = "unwrapInterval"
 
 	useVSOCKFlag         = "useVSOCK"
 	vsockCIDFlag         = "vsockCID"

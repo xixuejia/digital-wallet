@@ -15,6 +15,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
@@ -44,10 +46,12 @@ type secureIdentity struct {
 	iv                []byte
 	cryptoClient      pb.CryptoClient
 	encryptedKeyBytes []byte
+	clearKey          *ecdsa.PrivateKey
+	sync.RWMutex
 }
 
 // NewSecureIdentity creates an identity instance to do signing operation
-func NewSecureIdentity(pathToKeyAndCert, mspID, addr, apiKey, endpoint, instanceID string) (
+func NewSecureIdentity(pathToKeyAndCert, mspID, addr, apiKey, endpoint, instanceID string, unwrapInterval int) (
 	secureSigningID msp.SigningIdentity, err error) {
 	var files []os.FileInfo
 	if files, err = ioutil.ReadDir(filepath.Join(pathToKeyAndCert, "signcerts")); err != nil {
@@ -91,27 +95,34 @@ func NewSecureIdentity(pathToKeyAndCert, mspID, addr, apiKey, endpoint, instance
 	if err != nil {
 		return
 	}
-	si := &secureSigningIdentity{
-		&secureIdentity{
-			Mspid:        mspID,
-			CertBytes:    certPemBytes,
-			pubKey:       ecdsaPubKey,
-			addr:         addr,
-			apiKey:       apiKey,
-			endpoint:     endpoint,
-			instanceID:   instanceID,
-			ep11key:      ep11key,
-			iv:           iv,
-			cryptoClient: cryptoClient,
-		},
+	si := &secureIdentity{
+		Mspid:        mspID,
+		CertBytes:    certPemBytes,
+		pubKey:       ecdsaPubKey,
+		addr:         addr,
+		apiKey:       apiKey,
+		endpoint:     endpoint,
+		instanceID:   instanceID,
+		ep11key:      ep11key,
+		iv:           iv,
+		cryptoClient: cryptoClient,
 	}
-	encryptedKeyBytes, err := si.encrypt(keyBytes)
+	ssi := &secureSigningIdentity{si}
+	encryptedKeyBytes, err := ssi.encrypt(keyBytes)
 	if err != nil {
 		return
 	}
 	log.Printf("EC private key is encrypted!")
-	si.encryptedKeyBytes = encryptedKeyBytes
-	return si, nil
+	ssi.encryptedKeyBytes = encryptedKeyBytes
+	ssi.refreshKey() // initial unwrap EC private key with HPCS
+	ticker := time.NewTicker(time.Second * time.Duration(unwrapInterval))
+	go func() { // start a timer to periodically refresh the clear private key
+		for {
+			<-ticker.C
+			ssi.refreshKey()
+		}
+	}()
+	return ssi, nil
 }
 
 func (ssi *secureSigningIdentity) Sign(msg []byte) ([]byte, error) {
@@ -120,21 +131,9 @@ func (ssi *secureSigningIdentity) Sign(msg []byte) ([]byte, error) {
 }
 
 func (ssi *secureSigningIdentity) signDigest(digest []byte) ([]byte, error) {
-	decryptedECKey, err := ssi.decrypt(ssi.encryptedKeyBytes)
-	if err != nil {
-		return []byte{}, fmt.Errorf("unable to decrypt ec key: %s", err)
-	}
-	block, _ := pem.Decode([]byte(decryptedECKey))
-	x509Encoded := block.Bytes
-	ecdsaPemPrivateKey, err := x509.ParsePKCS8PrivateKey(x509Encoded)
-	ecdsaPrivateKey, ok := ecdsaPemPrivateKey.(*ecdsa.PrivateKey)
-	if !ok {
-		return []byte{}, errors.New("unable to convert pem ecdsa private key")
-	}
-	if err != nil {
-		return []byte{}, err
-	}
-	r, s, err := ecdsa.Sign(rand.Reader, ecdsaPrivateKey, digest[:])
+	ssi.RLock()
+	defer ssi.RUnlock()
+	r, s, err := ecdsa.Sign(rand.Reader, ssi.clearKey, digest[:])
 	if err != nil {
 		return []byte{}, err
 	}
@@ -270,6 +269,28 @@ func (si *secureIdentity) decrypt(ciphered []byte) ([]byte, error) {
 	}
 	decipher, err := si.cryptoClient.DecryptSingle(context.Background(), decipherSingleInfo)
 	return decipher.Plain, err
+}
+
+// refresh the clear private key
+func (si *secureIdentity) refreshKey() {
+	decryptedECKey, err := si.decrypt(si.encryptedKeyBytes)
+	if err != nil {
+		log.Fatalf("unable to decrypt ec key: %s", err)
+	}
+	block, _ := pem.Decode([]byte(decryptedECKey))
+	x509Encoded := block.Bytes
+	ecdsaPemPrivateKey, err := x509.ParsePKCS8PrivateKey(x509Encoded)
+	if err != nil {
+		log.Fatalf("unable to parse EC private key: %s", err.Error())
+	}
+	ecdsaPrivateKey, ok := ecdsaPemPrivateKey.(*ecdsa.PrivateKey)
+	if !ok {
+		log.Fatal("unable to convert pem ecdsa private key")
+	}
+	log.Println("refreshing clear EC private key with HPCS")
+	si.Lock()
+	defer si.Unlock()
+	si.clearKey = ecdsaPrivateKey
 }
 
 func genAESKeyAndIV(addr, apiKey, endpoint, instance string) ([]byte, []byte, pb.CryptoClient, error) {
