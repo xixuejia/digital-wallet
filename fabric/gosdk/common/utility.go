@@ -48,7 +48,7 @@ func GetConfigBackends(stringPath ...string) (core.ConfigProvider, error) {
 		configProvider := config.FromFile(pathvar.Subst(backendPath))
 		newBackend, err := configProvider()
 		if err != nil {
-			return nil, err
+			continue
 		}
 		configBackends = append(configBackends, newBackend...)
 	}
@@ -76,7 +76,9 @@ func GetTempChannelConfigFile(channelID string, peers []string) (string, error) 
 	if err != nil {
 		return "", err
 	}
-
+	if err = os.MkdirAll("config", os.ModePerm); err != nil && err != os.ErrExist {
+		return "", err
+	}
 	err = ioutil.WriteFile("config/"+channelID+".yaml", data, 0644)
 	if err != nil {
 		return "", err
