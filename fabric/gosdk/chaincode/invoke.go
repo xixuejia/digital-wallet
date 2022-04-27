@@ -22,6 +22,7 @@ import (
 	"github.com/xixuejia/digital-wallet/fabric/gosdk/common"
 	"github.com/xixuejia/digital-wallet/fabric/gosdk/utilities"
 	"github.com/xixuejia/digital-wallet/fabric/gosdk/utilities/hpcs"
+	"github.com/xixuejia/digital-wallet/fabric/gosdk/utilities/pkcs11"
 	"github.com/xixuejia/digital-wallet/fabric/gosdk/utilities/vsock"
 )
 
@@ -66,6 +67,10 @@ func invokeCmd() *cobra.Command {
 	flags.IntVar(&vsockCID, vsockCIDFlag, 0, "the context ID of vsock sign service")
 	flags.IntVar(&vsockPort, vsockPortFlag, 996, "the port of vsock sign service")
 	flags.IntVar(&vsockConnections, vsockConnectionsFlag, 10, "connections in vsock connection pool")
+	flags.BoolVar(&usePKCS11, usePKCS11Flag, false, "wheter to use PKCS11 interface")
+	flags.StringVar(&pkcs11LibPath, pkcs11LibPathFlag, "", "the path to the PKCS11 library so file path")
+	flags.StringVar(&userPIN, userPINFlag, "", "the user PIN to access HSM via PKCS11")
+	flags.StringVar(&pkcs11Label, pkcs11LabelFlag, "fabric", "the label for PKCS11")
 	chaincodeInvokeCmd.MarkFlagRequired(CC_NAME)
 	chaincodeInvokeCmd.MarkFlagRequired(CHANNEL_NAME)
 	chaincodeInvokeCmd.MarkFlagRequired(CC_PARAMS)
@@ -121,6 +126,9 @@ func invokeChaincode() error {
 	} else if useVSOCK {
 		core := vsock.NewProviderFactory()
 		sdk, err = fabsdk.New(configBackends, fabsdk.WithCorePkg(core))
+	} else if usePKCS11 {
+		core := pkcs11.NewProviderFactory()
+		sdk, err = fabsdk.New(configBackends, fabsdk.WithCorePkg(core))
 	}
 	if err != nil {
 		return errors.WithMessage(err, "Error creating sdk")
@@ -164,6 +172,14 @@ func invokeChaincode() error {
 		signingID, err := vsock.NewSecureIdentity(vsockCID, vsockPort, vsockConnections, "Org1MSP", filepath.Join(basePath, orgCryptoPath))
 		if err != nil {
 			return errors.WithMessage(err, "unable to create vsock signing identity")
+		}
+		clientContext = sdk.ChannelContext(channelName, fabsdk.WithOrg(org), fabsdk.WithIdentity(signingID))
+	} else if usePKCS11 {
+		common.Logger.Info("using PKCS11 interface")
+		signingID, err := pkcs11.NewSecureIdentity(filepath.Join(basePath, orgCryptoPath), "Org1MSP", pkcs11LibPath,
+			userPIN, pkcs11Label)
+		if err != nil {
+			return errors.WithMessage(err, "unable to create PKCS11 sining identity")
 		}
 		clientContext = sdk.ChannelContext(channelName, fabsdk.WithOrg(org), fabsdk.WithIdentity(signingID))
 	}
