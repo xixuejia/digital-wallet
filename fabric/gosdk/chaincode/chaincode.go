@@ -55,6 +55,11 @@ var (
 	vsockCID              int
 	vsockPort             int
 	vsockConnections      int // how many connections in connection pool
+	// mutually exclusive: useHPCS, useVSOCK, usePKCS11
+	usePKCS11     bool // whether to use PKCS11 interface to do sign.
+	pkcs11LibPath string
+	userPIN       string
+	pkcs11Label   string
 )
 
 const (
@@ -101,6 +106,11 @@ const (
 	vsockCIDFlag         = "vsockCID"
 	vsockPortFlag        = "vsockPort"
 	vsockConnectionsFlag = "vsockConnections"
+
+	usePKCS11Flag     = "usePKCS11"
+	pkcs11LibPathFlag = "pkcs11LibPath"
+	userPINFlag       = "userPIN"
+	pkcs11LabelFlag   = "pkcs11Label"
 )
 
 // Cmd returns the cobra command for Chaincode
