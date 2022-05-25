@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -23,22 +24,30 @@ func main() {
 		flagPrivateKeyPath = flag.String("k", "", "the private key path")
 		flagServer         = flag.Bool("s", false, "is it run as server")
 		flagPort           = flag.Uint("p", 0, "port ID to listen on or connect to")
-		flagContextID      = flag.Uint("c", 0, "the context ID of the server")
+		flagContextID      = flag.Uint("c", 0, "the context ID of the vsock to connect to")
 		flagDigest         = flag.String("d", "", "the digest to be signed")
+		flagTCP            = flag.Bool("t", true, "expose TCP port? either vsock or tcp")
 	)
 	flag.Parse()
+	fmt.Printf("flagTCP: %v\n", *flagTCP)
 	switch {
-	case *flagContextID == 0 && !*flagServer:
-		log.Fatalf(`specify either "-s" or "-c"`)
-	case *flagContextID > 0:
+	case *flagContextID == 0 && *flagPort == 0 && !*flagServer: // basic check
+		log.Fatalf(`specify either "-s" or "-c/p"`)
+	case !*flagServer: // client
 		log.Printf("Connecting as client...")
-		res, err := client(uint32(*flagContextID), uint32(*flagPort), *flagDigest)
+		var res string
+		var err error
+		if *flagTCP { // tcp client
+			res, err = client(uint32(*flagContextID), uint32(*flagPort), "tcp", *flagDigest)
+		} else { // vsock client
+			res, err = client(uint32(*flagContextID), uint32(*flagPort), "vsock", *flagDigest)
+		}
 		if err != nil {
-			log.Fatalf("error connecting vsock server: %s", err)
+			log.Fatalf("error connecting server: %s", err)
 		} else {
 			log.Printf("result from server: %s", res)
 		}
-	case *flagServer:
+	case *flagServer: // server
 		log.Printf("Run as server...")
 		priv, err := loadECDSAPrivKey(*flagPrivateKeyPath)
 		if err != nil {
@@ -46,9 +55,16 @@ func main() {
 			return
 		}
 		for {
-			if err := serve(uint32(*flagPort), priv); err != nil {
-				log.Fatalf("error serving vsock: %s", err)
-				return
+			if *flagTCP { // tcp server
+				if err := netServe("tcp", uint32(*flagPort), priv); err != nil {
+					log.Fatalf("error serving tcp: %s", err)
+					return
+				}
+			} else { // vsock server
+				if err := netServe("vsock", uint32(*flagPort), priv); err != nil {
+					log.Fatalf("error serving vsock: %s", err)
+					return
+				}
 			}
 		}
 	default:
@@ -56,8 +72,14 @@ func main() {
 	}
 }
 
-func serve(port uint32, priv *ecdsa.PrivateKey) error {
-	l, err := vsock.Listen(port)
+func netServe(network string, port uint32, priv *ecdsa.PrivateKey) error {
+	var l net.Listener
+	var err error
+	if network == "vsock" {
+		l, err = vsock.Listen(port)
+	} else {
+		l, err = net.Listen(network, fmt.Sprintf(":%d", port))
+	}
 	if err != nil {
 		return err
 	}
@@ -100,8 +122,14 @@ func serve(port uint32, priv *ecdsa.PrivateKey) error {
 	}
 }
 
-func client(cid, port uint32, digest string) (string, error) {
-	c, err := vsock.Dial(cid, port)
+func client(cid, port uint32, network string, digest string) (string, error) {
+	var c net.Conn
+	var err error
+	if network == "vsock" {
+		c, err = vsock.Dial(cid, port)
+	} else {
+		c, err = net.Dial(network, fmt.Sprintf("localhost:%d", port))
+	}
 	if err != nil {
 		return "", err
 	}
